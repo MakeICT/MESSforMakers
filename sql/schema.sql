@@ -151,6 +151,7 @@ COMMENT ON TABLE rbac_member_role_rel IS 'Defines the role a member is a part of
 CREATE TABLE area (
       id SERIAL PRIMARY KEY
     , name TEXT NOT NULL
+    , UNIQUE (name)
 );
 
 CREATE TABLE equipment (
@@ -159,8 +160,7 @@ CREATE TABLE equipment (
     , name TEXT NOT NULL
     , tag TEXT NOT NULL -- like a qr sticker on the equipment
     , brought_at TIMESTAMP
-    , created_at TIMESTAMP
-    , updated_at TIMESTAMP
+    , created_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 -- keeps it running
@@ -175,6 +175,8 @@ CREATE TABLE equipment_auth_member_rel (
       id SERIAL PRIMARY KEY
     , member_id INTEGER NOT NULL REFERENCES member(id)
     , equipment_id INTEGER NOT NULL REFERENCES equipment(id)
+    , created_at TIMESTAMP NOT NULL DEFAULT now()
+    , UNIQUE (member_id, equipment_id)
 );
 
 CREATE TABLE equipment_reservation (
