@@ -75,6 +75,7 @@ COMMENT ON TABLE member_ice IS 'Member In case of emergency (ICE)';
 CREATE TABLE rbac_permission_access (
       id SERIAL PRIMARY KEY
     , name TEXT NOT NULL
+    , UNIQUE (name)
 );
 COMMENT ON TABLE rbac_permission_access IS 'The actions that are possible on a resource: list, read, write';
 
@@ -84,27 +85,31 @@ CREATE TABLE rbac_permission (
       id SERIAL PRIMARY KEY
 	, rbac_permission_access_id INTEGER NOT NULL REFERENCES rbac_permission_access(id)
     , name TEXT NOT NULL
-    , created_at TIMESTAMP
+    , created_at TIMESTAMP NOT NULL DEFAULT now()
+    , UNIQUE (name)
 );
 
-CREATE TABLE rbac_permission_set (
+CREATE TABLE rbac_role (
       id SERIAL PRIMARY KEY
     , name TEXT NOT NULL
-    , created_at TIMESTAMP
+    , created_at TIMESTAMP NOT NULL DEFAULT now()
+    , UNIQUE (name)
 );
 
-CREATE TABLE rbac_permission_set_rel (
+CREATE TABLE rbac_role_permission_rel (
       id SERIAL PRIMARY KEY
+    , rbac_role INTEGER NOT NULL REFERENCES rbac_role(id)
     , rbac_permission_id INTEGER NOT NULL REFERENCES rbac_permission(id)
-    , rbac_permission_set_id INTEGER NOT NULL REFERENCES rbac_permission_set(id)
+    , UNIQUE (rbac_role, rbac_permission_id)
 );
 
-CREATE TABLE rbac_member_permission_set_rel (
+CREATE TABLE rbac_member_role_rel (
       id SERIAL PRIMARY KEY
     , member_id INTEGER NOT NULL REFERENCES member(id)
-    , rbac_permission_set_id INTEGER NOT NULL REFERENCES rbac_permission_set(id)
+    , rbac_role_id INTEGER NOT NULL REFERENCES rbac_role(id)
+    , UNIQUE (member_id, rbac_role_id)
 );
-COMMENT ON TABLE rbac_member_permission_set_rel IS 'what can a member to';
+COMMENT ON TABLE rbac_member_role_rel IS 'Defines the role a member is a part of';
 
 
 --------------------------------------------------------------------------------------------------------------------------------
