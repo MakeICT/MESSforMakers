@@ -64,6 +64,37 @@ COMMENT ON TABLE member_ice IS 'Member In case of emergency (ICE)';
 -- Event/Classes
 --------------------------------------------------------------------------------------------------------------------------------
 
+CREATE TABLE event_type (
+      id SERIAL PRIMARY KEY
+    , name TEXT NOT NULL
+);
+INSERT INTO event_type (name) VALUES ('Class'), ('Workshop');
+
+CREATE TABLE event (
+      id SERIAL PRIMARY KEY
+    , name TEXT NOT NULL
+    , day DATE NOT NULL
+    , time TIME NOT NULL
+    , duration INTERVAL NOT NULL
+    , location TEXT NOT NULL -- TODO fixme
+    , created_by INTEGER NOT NULL REFERENCES member(id)
+    , created_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE event_host_rel (
+      id SERIAL PRIMARY KEY
+	, member_id INTEGER NOT NULL REFERENCES member(id)
+	, event_id INTEGER NOT NULL REFERENCES event(id)
+    , role TEXT NOT NULL --- TODO fixme why they are doing at the event like Instructor, Check-in, Assistand, ???
+    , created_at TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE TABLE event_attendee_rel (
+      id SERIAL PRIMARY KEY
+	, member_id INTEGER NOT NULL REFERENCES member(id)
+	, event_id INTEGER NOT NULL REFERENCES event(id)
+    , created_at TIMESTAMP NOT NULL DEFAULT now()
+);
 
 --------------------------------------------------------------------------------------------------------------------------------
 -- Tables need for control of member in the site
