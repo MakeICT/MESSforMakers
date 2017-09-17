@@ -1,0 +1,11 @@
+1. Work on the mockups.  Specific details are in the comments on NinjaMock
+2. Build a more detailed roadmap from the requirements document.  Break things up into releases, and add some details to features regarding what each will depend on.
+3. Start creating projects on Github out of features, and issues out of smaller steps that can be completed.
+4. Create templates from the mockups
+    1. Create templates for the users pages
+    2. Create templates for the admin pages
+5. Implement material design for the templates.
+6. Implement the PostgreSQL database
+    1. The pq driver seems popular, and sqlx adds some extensions that look quite useful
+7. Implement testing with Agouti and Selenium
+8. And much, much more!
