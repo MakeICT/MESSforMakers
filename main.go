@@ -1,5 +1,5 @@
 /*
- Domesticated Apricot - An open source member and event management platform
+ MESS for Makers - An open source member and event management platform
     Copyright (C) 2017  Sam Schurter
 
     This program is free software: you can redistribute it and/or modify
@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
-	"github.com/makeict/Domesticated-Apricot/controllers"
+	"github.com/makeict/MESSforMakers/controllers"
 	"log"
 	"net/http"
 	"time"
