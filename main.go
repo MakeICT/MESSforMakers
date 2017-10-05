@@ -30,10 +30,10 @@ const appPort = "8080"
 
 func main() {
 	app := newApplication()
-
 	defer app.logger.Close()
+
 	app.logger.Println("Starting Application")
-	app.logger.Fatal(http.ListenAndServe(":"+appPort, app.appRouter()))
+	app.logger.Fatal(http.ListenAndServe(":"+appPort, app.Router))
 
 }
 
