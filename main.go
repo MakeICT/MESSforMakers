@@ -19,41 +19,22 @@ package main
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/justinas/alice"
-
-	"github.com/makeict/MESSforMakers/controllers"
-	"github.com/makeict/MESSforMakers/util"
-
 	"net/http"
 	"net/http/httputil"
 	"time"
+
+	"github.com/makeict/MESSforMakers/util"
 )
 
-type App struct {
-	*mux.Router
-}
+const appPort = "8080"
 
 func main() {
+	app := newApplication()
 
-	//Create logger
-	logger, err := util.NewLogger()
-	if err != nil {
-		fmt.Printf("Error creating logger :: %v", err)
-		panic(1)
-	}
-	defer logger.Close()
-	logger.Println("Starting Application")
+	defer app.logger.Close()
+	app.logger.Println("Starting Application")
+	app.logger.Fatal(http.ListenAndServe(":"+appPort, app.appRouter()))
 
-	//Create App
-	app := &App{mux.NewRouter()}
-	loggingMiddleware := loggingMiddleware{true, logger}
-	commonHandlers := alice.New(loggingMiddleware.loggingHandler)
-	userC := controllers.User
-	app.Handle("/", commonHandlers.ThenFunc(RootHandler))
-	app.Handle("/user", commonHandlers.ThenFunc(userC.Index))
-
-	logger.Fatal(http.ListenAndServe(":8080", app))
 }
 
 //Middleware
@@ -80,7 +61,7 @@ func (l *loggingMiddleware) loggingHandler(h http.Handler) http.Handler {
 	})
 }
 
-//obsolete, will all be handled in controllers
+// RootHandler is obsolete, will all be handled in controllers.
 func RootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "you got the root handler")
 }
