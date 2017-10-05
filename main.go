@@ -21,9 +21,12 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
+
 	"github.com/makeict/MESSforMakers/controllers"
-	"log"
+	"github.com/makeict/MESSforMakers/util"
+
 	"net/http"
+	"net/http/httputil"
 	"time"
 )
 
@@ -32,21 +35,48 @@ type App struct {
 }
 
 func main() {
+
+	//Create logger
+	logger, err := util.NewLogger()
+	if err != nil {
+		fmt.Printf("Error creating logger :: %v", err)
+		panic(1)
+	}
+	defer logger.Close()
+	logger.Println("Starting Application")
+
+	//Create App
 	app := &App{mux.NewRouter()}
-	commonHandlers := alice.New(loggingHandler)
+	loggingMiddleware := loggingMiddleware{true, logger}
+	commonHandlers := alice.New(loggingMiddleware.loggingHandler)
 	userC := controllers.User
 	app.Handle("/", commonHandlers.ThenFunc(RootHandler))
 	app.Handle("/user", commonHandlers.ThenFunc(userC.Index))
-	log.Fatal(http.ListenAndServe(":8080", app))
+
+	logger.Fatal(http.ListenAndServe(":8080", app))
 }
 
-//middleware
-func loggingHandler(h http.Handler) http.Handler {
+//Middleware
+type loggingMiddleware struct {
+	dumpRequest bool
+	logger      *util.Logger
+}
+
+func (l *loggingMiddleware) loggingHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t1 := time.Now()
+
+		if l.dumpRequest {
+			if reqDump, err := httputil.DumpRequest(r, true); err == nil {
+				l.logger.Printf("Recieved Request:\n%s\n", reqDump)
+			}
+		}
+
 		h.ServeHTTP(w, r)
+
 		t2 := time.Now()
-		fmt.Printf("[%s] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
+
+		l.logger.Printf("[%s] %s %v\n", r.Method, r.URL.String(), t2.Sub(t1))
 	})
 }
 
