@@ -18,9 +18,12 @@
 package controllers
 
 import (
-	"github.com/jmoiron/sqlx"
-	"github.com/makeict/MESSforMakers/views"
 	"net/http"
+
+	"github.com/jmoiron/sqlx"
+
+	"github.com/makeict/MESSforMakers/models"
+	"github.com/makeict/MESSforMakers/views"
 )
 
 //separate files for each individual controller
@@ -38,9 +41,9 @@ func (c *UserController) Index(db *sqlx.DB) func(w http.ResponseWriter, r *http.
 		//needs to be a slice of User from the database
 		//pagination needs to be built in from the start. get from query param if
 		//there and store in cookie. else, get from cookie
-		user := []string{"first middle name", "last name"}
+		users, _ := models.GetAllUsers(db, 10, 0)
 
-		if err := views.User.Index.Render(w, user); err != nil {
+		if err := views.User.Index.Render(w, users); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 

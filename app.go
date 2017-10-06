@@ -37,7 +37,7 @@ func newApplication() *application {
 	commonHandlers := alice.New(loggingMiddleware.loggingHandler)
 
 	//set up the database
-	db, err := models.InitDB("connection")
+	db, err := models.InitDB("postgres://vztngihfamevpx:2555f8b0e9f19cef182deb741958401065d75e1fe6aa91839a383908e9717682@ec2-23-21-220-32.compute-1.amazonaws.com:5432/dc9hak1f3kqc35")
 	if err != nil {
 		fmt.Printf("Error initializing database :: %v", err)
 		panic(1)

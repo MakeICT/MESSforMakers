@@ -16,8 +16,25 @@ func (u *User) getUser(db *sqlx.DB) error {
 }
 
 //get "count" many users, starting "offset" users from the beginning
-func getAllUsers(db *sqlx.DB, count, offset int) ([]User, error) {
-	return nil, nil
+func GetAllUsers(db *sqlx.DB, count, offset int) ([]User, error) {
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+	rows, err := db.Queryx("SELECT * FROM users")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []User{}
+	for rows.Next() {
+		var u User
+		if err := rows.StructScan(&u); err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+	return users, nil
 }
 
 //create user (need user details populated)
