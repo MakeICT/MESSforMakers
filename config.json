@@ -1,10 +1,10 @@
 {
 	"database_settings": {
-		"username":"",
-		"password":"",
-		"host":"",
-		"port":"",
-		"database":"",
+		"username":"postgres_test",
+		"password":"password",
+		"host":"localhost",
+		"port":5432,
+		"database":"makeict",
 		"sslmode":""
 	},
 	"logger_settings": {

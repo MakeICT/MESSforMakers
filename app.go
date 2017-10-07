@@ -38,9 +38,10 @@ func newApplication(config *Config) *application {
 
 	//set up the database
 	db, err := models.InitDB(fmt.Sprintf(
-		"postgres://%s@%s:%d/%s",
+		"postgres://%s:%s@%s:%d/%s",
 		config.Database.Username,
 		config.Database.Password,
+		config.Database.Host,
 		config.Database.Port,
 		config.Database.Database,
 	))
@@ -67,12 +68,12 @@ func (a *application) appRouter(c alice.Chain) {
 	router := mux.NewRouter()
 
 	//declare all the controllers so they are more readable in the routes table
-	userC := controllers.User
+	userC := controllers.User(a.DB)
 
 	//set all the routes here. Uses gorilla/mux so routes can use regex,
 	//and following with .Methods() allows for limiting them to only specific HTTP methods
 	router.HandleFunc("/", RootHandler)
-	router.HandleFunc("/user", userC.Index(a.DB))
+	router.HandleFunc("/user", userC.Index())
 
 	//set the app router. Alice will pass all the requests through the middleware chain first,
 	//then to the functions defined above
