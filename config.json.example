@@ -1,0 +1,13 @@
+{
+	"database_settings": {
+		"username":"",
+		"password":"",
+		"host":"",
+		"port":"",
+		"database":"",
+		"sslmode":""
+	},
+	"logger_settings": {
+		"dump_request":""
+	}
+}

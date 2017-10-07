@@ -29,7 +29,12 @@ import (
 const appPort = "8080"
 
 func main() {
-	app := newApplication()
+	config, err := InitConfig("config.json")
+	if err != nil {
+		fmt.Print("Cannot parse the configuration file")
+		panic(1)
+	}
+	app := newApplication(config)
 	defer app.logger.Close()
 
 	app.logger.Println("Starting Application")

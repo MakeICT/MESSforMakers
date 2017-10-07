@@ -23,7 +23,7 @@ type application struct {
 	Router      http.Handler
 }
 
-func newApplication() *application {
+func newApplication(config *Config) *application {
 
 	//Set up a logger middleware
 	logger, err := util.NewLogger()
@@ -37,7 +37,13 @@ func newApplication() *application {
 	commonHandlers := alice.New(loggingMiddleware.loggingHandler)
 
 	//set up the database
-	db, err := models.InitDB("postgres://vztngihfamevpx:2555f8b0e9f19cef182deb741958401065d75e1fe6aa91839a383908e9717682@ec2-23-21-220-32.compute-1.amazonaws.com:5432/dc9hak1f3kqc35")
+	db, err := models.InitDB(fmt.Sprintf(
+		"postgres://%s@%s:%d/%s",
+		config.Database.Username,
+		config.Database.Password,
+		config.Database.Port,
+		config.Database.Database,
+	))
 	if err != nil {
 		fmt.Printf("Error initializing database :: %v", err)
 		panic(1)
