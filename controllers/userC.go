@@ -31,17 +31,22 @@ import (
 
 type UserController struct {
 	Controller
+	DB *sqlx.DB
 }
 
-var User UserController
+//var User UserController
 
-func (c *UserController) Index(db *sqlx.DB) func(w http.ResponseWriter, r *http.Request) {
+func User(db *sqlx.DB) UserController {
+	return UserController{DB: db}
+}
+
+func (c *UserController) Index() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		//needs to be a slice of User from the database
 		//pagination needs to be built in from the start. get from query param if
 		//there and store in cookie. else, get from cookie
-		users, _ := models.GetAllUsers(db, 10, 0)
+		users, _ := models.GetAllUsers(c.DB, 10, 0)
 
 		if err := views.User.Index.Render(w, users); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
