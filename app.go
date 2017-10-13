@@ -23,7 +23,7 @@ type application struct {
 	Router      http.Handler
 }
 
-func newApplication() *application {
+func newApplication(config *Config) *application {
 
 	//Set up a logger middleware
 	logger, err := util.NewLogger()
@@ -37,7 +37,14 @@ func newApplication() *application {
 	commonHandlers := alice.New(loggingMiddleware.loggingHandler)
 
 	//set up the database
-	db, err := models.InitDB("postgres://vztngihfamevpx:2555f8b0e9f19cef182deb741958401065d75e1fe6aa91839a383908e9717682@ec2-23-21-220-32.compute-1.amazonaws.com:5432/dc9hak1f3kqc35")
+	db, err := models.InitDB(fmt.Sprintf(
+		"postgres://%s:%s@%s:%d/%s",
+		config.Database.Username,
+		config.Database.Password,
+		config.Database.Host,
+		config.Database.Port,
+		config.Database.Database,
+	))
 	if err != nil {
 		fmt.Printf("Error initializing database :: %v", err)
 		panic(1)
@@ -61,12 +68,12 @@ func (a *application) appRouter(c alice.Chain) {
 	router := mux.NewRouter()
 
 	//declare all the controllers so they are more readable in the routes table
-	userC := controllers.User
+	userC := controllers.User(a.DB)
 
 	//set all the routes here. Uses gorilla/mux so routes can use regex,
 	//and following with .Methods() allows for limiting them to only specific HTTP methods
 	router.HandleFunc("/", RootHandler)
-	router.HandleFunc("/user", userC.Index(a.DB))
+	router.HandleFunc("/user", userC.Index())
 
 	//set the app router. Alice will pass all the requests through the middleware chain first,
 	//then to the functions defined above
