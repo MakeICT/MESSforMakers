@@ -1,6 +1,6 @@
 #!/bin/bash
 
 dropdb makeict
-createdb makeict
+createdb makeict -O $1
 
-psql -U $USER -h localhost makeict -f schema.sql
+psql -U $1 -h localhost makeict -f schema.sql
