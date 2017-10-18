@@ -30,3 +30,48 @@ After you have worked on your feature and have it working you can submit a pull 
 
 ### How will all this code be tested?
 At this time, with very little written in the way of code or tests, the plan is to use acceptance testing to make sure that routes, validation, server responses, etc are working.  Unit tests may be used in some cases to prove that specific bugs are fixed and prevent regression.
+
+# Setting up with Cloud9
+Cloud9 has PostgreSQL, Git, and Go already set up and is a workable Go IDE, so it's easy for someone new to Go or software development to use for getting started. This guide does assume you are familiar with git, and creating and navigating directories on Linux.
+1. Go to [Cloud9](c9.io)
+2. Login with your github account
+3. Create new blank workspace
+4. Create 3 new folders, `bin`, `pkg`, and `src` for your compiled binaries, compiled libraries, and source code respectively.  These are the folders that Go expects by default.
+5. `$GOPATH` is set up automatically, but you can type `c9 open ~/.profile` and add this at the end of the file to make running binaries easier. 
+```
+export PATH=$PATH:$GOPATH/bin
+```
+6. In the same `.profile` add the following to automatically run the PostgreSQL server: You will have to close and reopen the terminal for these to take effect.
+```
+function checkstart {
+	service=$1
+	if [[ ! $(ps -ef | grep -v grep | grep "$service" | wc -l) > 0 ]]
+	then
+		sudo service $service start &
+	fi
+}
+checkstart postgresql
+```
+7. Create a postgres user by typing `psql` and then 
+```
+CREATE ROLE <username> WITH LOGIN PASSWORD ‘<password’ CREATEDB;
+```
+8. Create a postgres database while still in psql with 
+```
+CREATE DATABASE <database> OWNER <username>;
+```
+9. Create folder `src/github.com/makeict/MESSforMakers` and change to that folder.
+From the folder, run `git clone https://github.com/MakeICT/MESSforMakers.git`
+10. You then need to install all the build dependencies with 
+```
+go get github.com/jmoiron/sqlx github.com/gorilla/sessions github.com/gorilla/mux github.com/justinas/alice github.com/lib/pq
+```
+  - This list is subject to probably a lot of change. If you get errors that a library cannot be found, just `go get` that library
+11. Prepopulate the database with 
+```
+psql postgres://<username>:<password>@localhost:5432/<database> -f test_tables.sql
+```
+12. Configure the server by opening `config.json` and setting the username, password, and database to whatever you chose earlier, and the host and port to `localhost` and `5432`.
+13. At this point you should be able to type `go install` and then `MESSforMakers` and the server should run. You can then click the “Preview” button at the top of the editor to see the application running in a browser window.
+14. All these instructions should work on any linux distro, but if you don’t use Cloud9 you will have to set up Git, PostgreSQL, and Go manually.
+
