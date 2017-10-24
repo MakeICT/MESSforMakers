@@ -7,7 +7,7 @@ The first steps are to get something minimal that can begin to take the place of
 We also hope to make this project about a lot more than just MakeICT.  We feel that every makerspace could use a good management tool for free. We'd like to keep in mind a design philosophy that makes it easy for other organizations to deploy, customize, and extend this platform.
 
 # Resources 
-You can join the discussion on Slack, or come to a scheduled meeting.  Check out [devICT's home page](devict.org) for information on joining Slack and for joining the Meetup for event notifications.
+You can join the discussion on Slack, or come to a scheduled meeting.  Check out [devICT's home page](http://devict.org) for information on joining Slack and for joining the Meetup for event notifications.
 
 Our current design mockups are on [NinjaMock](https://ninjamock.com/s/JC7Q9).  Check them out to see the direction we are taking, especially if you would like to help with the front-end development.
 
@@ -22,7 +22,7 @@ Next, check the projects or issues for something that interests you, or that you
 When you find something, see if there is a branch for that feature or bug, if not make a new one.  
 
 ### What technology does this prjoect use?
-We are currently building the server backend in Go (1.7.3), the frontend with Material.io, and using PostgreSQL (9.3) for storage.  Various other libraries may be used, but those will be explained in the comments in the files that use them.
+We are currently building the server backend in Go (1.7.3), the frontend with [Material.io](https://material.io), and using PostgreSQL (9.3) for storage.  Various other libraries may be used, but those will be explained in the comments in the files that use them.
 
 ### How should I add or work on a feature?
 Check the projects or issues to find something you want to work on.  Then, check the branches to see if someone is already working on it.  If they are, you can join that branch, or if not, you will need to create a new branch. More information on the git Feature Branch workflow can be found in [this tutorial](https://www.atlassian.com/git/tutorials/comparing-workflows#feature-branch-workflow) by Atlassian.  It also has a very good beginners guide to using Git if you never have before.
@@ -33,7 +33,7 @@ At this time, with very little written in the way of code or tests, the plan is 
 
 # Setting up with Cloud9
 Cloud9 has PostgreSQL, Git, and Go already set up and is a workable Go IDE, so it's easy for someone new to Go or software development to use for getting started. This guide does assume you are familiar with git, and creating and navigating directories on Linux.
-1. Go to [Cloud9](c9.io)
+1. Go to [Cloud9](https://c9.io)
 2. Login with your github account
 3. Create new blank workspace
 4. Create 3 new folders, `bin`, `pkg`, and `src` for your compiled binaries, compiled libraries, and source code respectively.  These are the folders that Go expects by default.
