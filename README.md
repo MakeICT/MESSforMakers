@@ -54,7 +54,7 @@ checkstart postgresql
 ```
 7. Create a postgres user by typing `psql` and then 
 ```
-CREATE ROLE <username> WITH LOGIN PASSWORD ‘<password’ CREATEDB;
+CREATE ROLE <username> WITH LOGIN PASSWORD ‘<password>’ CREATEDB;
 ```
 8. Create a postgres database while still in psql with 
 ```
