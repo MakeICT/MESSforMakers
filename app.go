@@ -72,8 +72,8 @@ func (a *application) appRouter(c alice.Chain) {
 
 	//set all the routes here. Uses gorilla/mux so routes can use regex,
 	//and following with .Methods() allows for limiting them to only specific HTTP methods
-	router.HandleFunc("/", RootHandler)
 	router.HandleFunc("/user", userC.Index())
+	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("static/"))))
 
 	//set the app router. Alice will pass all the requests through the middleware chain first,
 	//then to the functions defined above
