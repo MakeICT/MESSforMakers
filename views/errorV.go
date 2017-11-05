@@ -15,30 +15,37 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-package controllers
+package views
 
 import (
-	"net/http"
-
-	"github.com/makeict/MESSforMakers/views"
+	"html/template"
+	"log"
+	"path/filepath"
 )
 
-type Controller struct{}
-
-//this file for defining methods common to all controllers
-
-func NotImplementedController() Controller {
-	return Controller{}
+type ErrorView struct {
+	View
+	//add custom pages for a controller here
 }
 
-func (c *Controller) Index() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+var ErrorPage ErrorView
 
-		body := "This page has not been implemented yet!"
-
-		if err := views.ErrorPage.Index.Render(w, body); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-
+func ErrorFiles() []string {
+	files, err := filepath.Glob("templates/error/includes/*.gohtml")
+	if err != nil {
+		log.Panic(err)
 	}
+	files = append(files, LayoutFiles()...)
+	return files
+}
+
+func init() {
+	errorFiles := append(ErrorFiles(), "templates/error/index.gohtml")
+	ErrorPage.Index = Page{
+		Template: template.Must(template.New("index").ParseFiles(errorFiles...)),
+		Layout:   "index",
+	}
+
+	//parse other needed templates here, for each page
+
 }

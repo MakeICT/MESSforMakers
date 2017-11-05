@@ -69,6 +69,7 @@ func (a *application) appRouter(c alice.Chain) {
 
 	//declare all the controllers so they are more readable in the routes table
 	userC := controllers.User(a.DB)
+	NIC := controllers.NotImplementedController()
 
 	//set all the routes here. Uses gorilla/mux so routes can use regex,
 	//and following with .Methods() allows for limiting them to only specific HTTP methods
