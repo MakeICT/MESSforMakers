@@ -1,3 +1,5 @@
+--
+
 -- This command must be run as superuser once per database:
 CREATE EXTENSION btree_gist;
 
@@ -75,7 +77,7 @@ CREATE TABLE membership_status (
     , UNIQUE (name)
 );
 COMMENT ON TABLE membership_status IS 'Holds values to indicate whether a person is an active member of MakeICT or not';
-INSERT INTO membership_status (name) VALUES ('active'), ('past_due'), ('quit'), ('guest');
+INSERT INTO membership_status (name) VALUES ('guest'), ('active'), ('past_due'), ('quit');
 
 CREATE TABLE membership_options (
 	id SERIAL PRIMARY KEY
@@ -97,7 +99,7 @@ CREATE TABLE member (
     , phone TEXT NOT NULL
 	, membership_status_id INTEGER NOT NULL REFERENCES membership_status(id)
 	, membership_expires DATE 
-	, membership_option INTEGER NOT NULL REFERENCES membership_options(id)
+	, membership_option INTEGER REFERENCES membership_options(id)
 	, rbac_role_id INTEGER NOT NULL REFERENCES rbac_role(id)
     , created_at TIMESTAMP NOT NULL DEFAULT now()
     , updated_at TIMESTAMP
