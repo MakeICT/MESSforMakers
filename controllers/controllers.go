@@ -31,10 +31,10 @@ func NotImplementedController() Controller {
 	return Controller{}
 }
 
-func (c *Controller) Index() func(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) None(route string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		body := "This page has not been implemented yet!"
+		body := "This route has not been implemented yet: " + route
 
 		if err := views.ErrorPage.Index.Render(w, body); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
