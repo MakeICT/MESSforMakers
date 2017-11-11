@@ -89,7 +89,11 @@ func (a *application) appRouter(c alice.Chain) {
 	router.HandleFunc("/user/{id:[0-9]+}/uploadwaiver", NIC.None("save waiver")).Methods("POST")
 	router.HandleFunc("/user/{id:[0-9]+}/waiver", NIC.None("show waiver")).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}/waiver", NIC.None("delete waiver")).Methods("DELETE")
+
+	//TODO: need better static file serving to prevent directory browsing
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
+
+	//TODO: need to implement handlers for 404 and 405, the implement router.NotFoundHandler and router.MethodNotAllowedHandler
 
 	//set the app router. Alice will pass all the requests through the middleware chain first,
 	//then to the functions defined above
