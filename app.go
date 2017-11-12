@@ -46,7 +46,7 @@ func newApplication(config *Config) *application {
 		config.Database.Database,
 	))
 	if err != nil {
-		fmt.Printf("Error initializing database :: %v", err)
+		fmt.Printf("Error initializing database :: %v\n", err)
 		panic(1)
 	}
 
@@ -72,7 +72,8 @@ func (a *application) appRouter(c alice.Chain) {
 
 	//set all the routes here. Uses gorilla/mux so routes can use regex,
 	//and following with .Methods() allows for limiting them to only specific HTTP methods
-	router.HandleFunc("/", RootHandler)
+	router.HandleFunc("/", RootHandler).Methods("GET")
+	router.HandleFunc("/", SetCookieHandler).Methods("POST")
 	router.HandleFunc("/user", userC.Index())
 
 	//set the app router. Alice will pass all the requests through the middleware chain first,
