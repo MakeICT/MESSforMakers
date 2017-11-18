@@ -1,97 +1,97 @@
-// package main
+package main
 
-// import (
-// 	"fmt"
-// 	. "github.com/onsi/gomega"
-// 	"github.com/sclevine/agouti"
-// 	// 	"github.com/sclevine/agouti/matchers"
-// 	"net/http"
-// 	"os"
-// 	"runtime/debug"
-// 	"testing"
-// )
+import (
+	"fmt"
+	. "github.com/onsi/gomega"
+	"github.com/sclevine/agouti"
+	// 	"github.com/sclevine/agouti/matchers"
+	"net/http"
+	"os"
+	"runtime/debug"
+	"testing"
+)
 
-// var (
-// 	driver *agouti.WebDriver
-// 	page   *agouti.Page
-// )
+var (
+	driver *agouti.WebDriver
+	page   *agouti.Page
+)
 
-// func TestMain(m *testing.M) {
-// 	var t *testing.T
-// 	var err error
+func TestMain(m *testing.M) {
+	var t *testing.T
+	var err error
 
-// 	driver = agouti.ChromeDriver()
-// 	driver.Start()
+	driver = agouti.ChromeDriver()
+	driver.Start()
 
-// 	go startWebsite()
+	go startWebsite()
 
-// 	page, err = agouti.NewPage(
-// 		driver.URL(),
-// 		agouti.Desired(agouti.Capabilities{
-// 			"chromeOptions": map[string][]string{
-// 				"args": []string{
-// 					"disable-gpu",
-// 					"no-sandbox",
-// 					"headless",
-// 				},
-// 			},
-// 		}),
-// 	)
+	page, err = agouti.NewPage(
+		driver.URL(),
+		agouti.Desired(agouti.Capabilities{
+			"chromeOptions": map[string][]string{
+				"args": []string{
+					"disable-gpu",
+					"no-sandbox",
+					"headless",
+				},
+			},
+		}),
+	)
 
-// 	if err != nil {
-// 		t.Error("Failed to open page.")
-// 	}
+	if err != nil {
+		t.Error("Failed to open page.")
+	}
 
-// 	RegisterTestingT(t)
-// 	test := m.Run()
+	test := m.Run()
 
-// 	driver.Stop()
-// 	os.Exit(test)
+	driver.Stop()
+	os.Exit(test)
 
-// }
-// func startWebsite() {
-// 	config, err := InitConfig("config.json")
-// 	if err != nil {
-// 		fmt.Print("Cannot parse the configuration file")
-// 		panic(1)
-// 	}
+}
+func startWebsite() {
+	config, err := InitConfig("config.json")
+	if err != nil {
+		fmt.Print("Cannot parse the configuration file")
+		panic(1)
+	}
 
-// 	// create the app with user-defined settings
-// 	app := newApplication(config)
+	// create the app with user-defined settings
+	app := newApplication(config)
 
-// 	// make sure the logger releases it's resources if the server shuts down.
-// 	defer app.logger.Close()
+	// make sure the logger releases it's resources if the server shuts down.
+	defer app.logger.Close()
 
-// 	app.logger.Println("Starting Application")
-// 	app.logger.Fatal(http.ListenAndServe(":8080", app.Router))
-// }
+	app.logger.Println("Starting Application")
+	app.logger.Fatal(http.ListenAndServe(":8080", app.Router))
+}
 
-// func StopDriverOnPanic() {
-// 	//var t *testing.T
-// 	if r := recover(); r != nil {
-// 		debug.PrintStack()
-// 		fmt.Println("Recovered in StopDriverOnPanic", r)
-// 		//driver.Stop()
-// 		//t.Fail()
-// 	}
-// }
+func StopDriverOnPanic() {
+	var t *testing.T
+	if r := recover(); r != nil {
+		debug.PrintStack()
+		fmt.Println("Recovered in StopDriverOnPanic", r)
+		driver.Stop()
+		t.Fail()
+	}
+}
 
-// func TestPage(t *testing.T) {
-// 	defer StopDriverOnPanic()
-// 	Expect(page.Navigate("http://localhost:8080")).To(Succeed())
-// }
+func TestPage(t *testing.T) {
+	RegisterTestingT(t)
+	defer StopDriverOnPanic()
+	Expect(page.Navigate("http://localhost:8080")).To(Succeed())
+}
 
-// func TestForm(t *testing.T) {
-// 	defer StopDriverOnPanic()
+func TestForm(t *testing.T) {
+	defer StopDriverOnPanic()
+	RegisterTestingT(t)
+	Expect(page.Navigate("http://localhost:8080/")).To(Succeed()) //fmt.Sprintf("%v/user", baseUrl)
+	err := page.Find("#submit-butt").Click()
+	fmt.Println(page.Find("#submit-butt").String())
+	fmt.Println(err)
+	fmt.Println(Succeed().Match(err))
+	Expect(page.Find("#submit-butt").Click()).To(Succeed())
 
-// 	Expect(page.Navigate("http://localhost:8080/")).To(Succeed()) //fmt.Sprintf("%v/user", baseUrl)
-// 	err := page.Find("#submit-butt").Click()
-// 	fmt.Println(page.Find("#submit-butt").String())
-// 	fmt.Println(err)
-// 	fmt.Println(Succeed().Match(err))
-// 	Expect(page.Find("#submit-butt").Click()).To(Succeed())
-
-// }
+}
 
 //******************************************************************************************
 
@@ -177,138 +177,138 @@
 
 // *********************************************************************************
 
-package main
+// package main
 
-import (
-	"bytes"
-	"flag"
-	"net/http"
-	"net/http/cookiejar"
-	"net/http/httptest"
-	"net/url"
-	"os"
-	"strings"
-	"testing"
-)
+// import (
+// 	"bytes"
+// 	"flag"
+// 	"net/http"
+// 	"net/http/cookiejar"
+// 	"net/http/httptest"
+// 	"net/url"
+// 	"os"
+// 	"strings"
+// 	"testing"
+// )
 
-func TestMain(m *testing.M) {
-	// set up anything that should be run once before all tests here
+// func TestMain(m *testing.M) {
+// 	// set up anything that should be run once before all tests here
 
-	//parse flags so that "go test" respects command line flags
-	flag.Parse()
+// 	//parse flags so that "go test" respects command line flags
+// 	flag.Parse()
 
-	// run the test suite and store the code
-	exitCode := m.Run()
+// 	// run the test suite and store the code
+// 	exitCode := m.Run()
 
-	// do any teardown needed once after all tests
+// 	// do any teardown needed once after all tests
 
-	// Exit and return the code
-	os.Exit(exitCode)
-}
+// 	// Exit and return the code
+// 	os.Exit(exitCode)
+// }
 
-func TestNewApplication(t *testing.T) {
+// func TestNewApplication(t *testing.T) {
 
-	// Test that the app initializer panics if there is a bad config supplied
-	cfg := &Config{}
-	cfg.Database.Username = "none"
-	t.Run("bad config should panic", testNewAppFunc(cfg, true))
+// 	// Test that the app initializer panics if there is a bad config supplied
+// 	cfg := &Config{}
+// 	cfg.Database.Username = "none"
+// 	t.Run("bad config should panic", testNewAppFunc(cfg, true))
 
-	// check that the app initializer rerturn OK if a good config is supplied
-	// TODO: set up a testing database so that connection is possible.
-	cfg = &Config{}
-	cfg.Database.Username = "postgres_test"
-	t.Run("good config should not panic", testNewAppFunc(cfg, false))
+// 	// check that the app initializer rerturn OK if a good config is supplied
+// 	// TODO: set up a testing database so that connection is possible.
+// 	cfg = &Config{}
+// 	cfg.Database.Username = "postgres_test"
+// 	t.Run("good config should not panic", testNewAppFunc(cfg, false))
 
-}
+// }
 
-//pass a Config struct in, along with whether the test is expected to panic
-func testNewAppFunc(cfg *Config, expectToPanic bool) func(*testing.T) {
-	return func(t *testing.T) {
-		defer func() {
-			if expectToPanic {
-				if r := recover(); r == nil {
-					t.Error("app did not panic with bad config")
-				}
-			} else {
-				if r := recover(); r != nil {
-					t.Error("app panicked with good config")
-				}
-			}
-		}()
+// //pass a Config struct in, along with whether the test is expected to panic
+// func testNewAppFunc(cfg *Config, expectToPanic bool) func(*testing.T) {
+// 	return func(t *testing.T) {
+// 		defer func() {
+// 			if expectToPanic {
+// 				if r := recover(); r == nil {
+// 					t.Error("app did not panic with bad config")
+// 				}
+// 			} else {
+// 				if r := recover(); r != nil {
+// 					t.Error("app panicked with good config")
+// 				}
+// 			}
+// 		}()
 
-		_ = newApplication(cfg)
+// 		_ = newApplication(cfg)
 
-	}
-}
+// 	}
+// }
 
-type AppTestServer struct {
-	client *http.Client
-	app    *application
-	t      *testing.T
-	server *httptest.Server
-}
+// type AppTestServer struct {
+// 	client *http.Client
+// 	app    *application
+// 	t      *testing.T
+// 	server *httptest.Server
+// }
 
-func TestRoutes(t *testing.T) {
+// func TestRoutes(t *testing.T) {
 
-	//set up a functional configuration
-	//TODO make this a test config, not a real config.  Needs test database set up first
-	cfg, err := InitConfig("config.json")
+// 	//set up a functional configuration
+// 	//TODO make this a test config, not a real config.  Needs test database set up first
+// 	cfg, err := InitConfig("config.json")
 
-	// create a new app
-	app := newApplication(cfg)
+// 	// create a new app
+// 	app := newApplication(cfg)
 
-	// start a test server running that app
-	server := httptest.NewServer(app.Router)
+// 	// start a test server running that app
+// 	server := httptest.NewServer(app.Router)
 
-	//make sure the server gets shut down after testing
-	defer server.Close()
+// 	//make sure the server gets shut down after testing
+// 	defer server.Close()
 
-	// request the root route
-	resp, err := http.Get(server.URL + "/")
-	if err != nil {
-		t.Error(err)
-	}
+// 	// request the root route
+// 	resp, err := http.Get(server.URL + "/")
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
 
-	// verify the response is correct
-	buf := &bytes.Buffer{}
-	buf.ReadFrom(resp.Body)
-	if strings.Index(buf.String(), "root handler") == -1 {
-		t.Error("Root should say  root handler")
-	}
-}
+// 	// verify the response is correct
+// 	buf := &bytes.Buffer{}
+// 	buf.ReadFrom(resp.Body)
+// 	if strings.Index(buf.String(), "root handler") == -1 {
+// 		t.Error("Root should say  root handler")
+// 	}
+// }
 
-func TestCookies(t *testing.T) {
-	cfg, err := InitConfig("config.json")
-	app := newApplication(cfg)
-	server := httptest.NewServer(app.Router)
-	defer server.Close()
+// func TestCookies(t *testing.T) {
+// 	cfg, err := InitConfig("config.json")
+// 	app := newApplication(cfg)
+// 	server := httptest.NewServer(app.Router)
+// 	defer server.Close()
 
-	jar, err := cookiejar.New(nil)
-	if err != nil {
-		t.Error(err)
-	}
-	client := &http.Client{Jar: jar}
-	resp, err := client.Get(server.URL + "/")
-	if err != nil {
-		t.Error(err)
-	}
-	buf := &bytes.Buffer{}
-	buf.ReadFrom(resp.Body)
-	if strings.Index(buf.String(), "Who are you") == -1 {
-		t.Error("Root should ask who on first visit")
-	}
+// 	jar, err := cookiejar.New(nil)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+// 	client := &http.Client{Jar: jar}
+// 	resp, err := client.Get(server.URL + "/")
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+// 	buf := &bytes.Buffer{}
+// 	buf.ReadFrom(resp.Body)
+// 	if strings.Index(buf.String(), "Who are you") == -1 {
+// 		t.Error("Root should ask who on first visit")
+// 	}
 
-	resp, err = client.PostForm(
-		server.URL+"/",
-		url.Values{"name": {"somebody"}},
-	)
-	if err != nil {
-		t.Error(err)
-	}
+// 	resp, err = client.PostForm(
+// 		server.URL+"/",
+// 		url.Values{"name": {"somebody"}},
+// 	)
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
 
-	buf.Reset()
-	buf.ReadFrom(resp.Body)
-	if strings.Index(buf.String(), "Hi somebody") == -1 {
-		t.Error("root should say hi after form is posted")
-	}
-}
+// 	buf.Reset()
+// 	buf.ReadFrom(resp.Body)
+// 	if strings.Index(buf.String(), "Hi somebody") == -1 {
+// 		t.Error("root should say hi after form is posted")
+// 	}
+// }
