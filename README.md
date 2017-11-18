@@ -7,7 +7,7 @@ The first steps are to get something minimal that can begin to take the place of
 We also hope to make this project about a lot more than just MakeICT.  We feel that every makerspace could use a good management tool for free. We'd like to keep in mind a design philosophy that makes it easy for other organizations to deploy, customize, and extend this platform.
 
 # Resources 
-You can join the discussion on Slack, or come to a scheduled meeting.  Check out [devICT's home page](devict.org) for information on joining Slack and for joining the Meetup for event notifications.
+You can join the discussion on Slack, or come to a scheduled meeting.  Check out [devICT's home page](http://devict.org) for information on joining Slack and for joining the Meetup for event notifications.
 
 Our current design mockups are on [NinjaMock](https://ninjamock.com/s/JC7Q9).  Check them out to see the direction we are taking, especially if you would like to help with the front-end development.
 
@@ -22,7 +22,7 @@ Next, check the projects or issues for something that interests you, or that you
 When you find something, see if there is a branch for that feature or bug, if not make a new one.  
 
 ### What technology does this prjoect use?
-We are currently building the server backend in Go (1.7.3), the frontend with Material.io, and using PostgreSQL (9.3) for storage.  Various other libraries may be used, but those will be explained in the comments in the files that use them.
+We are currently building the server backend in Go (1.7.3), the frontend with [Material.io](https://material.io), and using PostgreSQL (9.3) for storage.  Various other libraries may be used, but those will be explained in the comments in the files that use them.
 
 ### How should I add or work on a feature?
 Check the projects or issues to find something you want to work on.  Then, check the branches to see if someone is already working on it.  If they are, you can join that branch, or if not, you will need to create a new branch. More information on the git Feature Branch workflow can be found in [this tutorial](https://www.atlassian.com/git/tutorials/comparing-workflows#feature-branch-workflow) by Atlassian.  It also has a very good beginners guide to using Git if you never have before.
@@ -33,46 +33,70 @@ At this time, with very little written in the way of code or tests, the plan is 
 
 # Setting up with Cloud9
 Cloud9 has PostgreSQL, Git, and Go already set up and is a workable Go IDE, so it's easy for someone new to Go or software development to use for getting started. This guide does assume you are familiar with git, and creating and navigating directories on Linux.
-1. Go to [Cloud9](c9.io)
+1. Go to [Cloud9](https://c9.io)
 2. Login with your github account
 3. Create new blank workspace
 4. Create 3 new folders, `bin`, `pkg`, and `src` for your compiled binaries, compiled libraries, and source code respectively.  These are the folders that Go expects by default.
 5. `$GOPATH` is set up automatically, but you can type `c9 open ~/.profile` and add this at the end of the file to make running binaries easier. 
-```
-export PATH=$PATH:$GOPATH/bin
-```
-6. In the same `.profile` add the following to automatically run the PostgreSQL server: You will have to close and reopen the terminal for these to take effect.
-```
-function checkstart {
-	service=$1
-	if [[ ! $(ps -ef | grep -v grep | grep "$service" | wc -l) > 0 ]]
-	then
-		sudo service $service start &
-	fi
-}
-checkstart postgresql
-```
-7. Create a postgres user by typing `psql` and then 
-```
-CREATE ROLE <username> WITH LOGIN PASSWORD ‘<password’ CREATEDB;
-```
-8. Create a postgres database while still in psql with 
-```
-CREATE DATABASE <database> OWNER <username>;
-```
-9. Create folder `src/github.com/makeict/MESSforMakers` and change to that folder.
+    ```
+    export PATH=$PATH:$GOPATH/bin
+    ```
+6. Upgrade PostgreSQL from 9.3 to 10.  
+* Add the new version repo to apt 
+    ```
+	echo "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+	```
+* Add the signing certificate to apt
+    ```
+    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+    ```
+* Update apt to get the list of packages including version 10
+    ```
+    sudo apt-get update
+    ```
+* Install version 10
+    ```
+    sudo apt-get install postgresql-10
+    ```
+    Choose keep local cluster configuration when asked 
+    
+* Drop the new cluster, upgrade the old cluster, drop the old cluster.
+    ```
+    sudo pg_dropcluster --stop 10 main
+    sudo pg_upgradecluster 9.3 main
+    sudo pg_dropcluster 9.3 main
+    ```
+7. In the same `.profile` add the following to automatically run the PostgreSQL server: You will have to close and reopen the terminal for these to take effect.
+    ```
+    function checkstart {
+        service=$1
+        if [[ ! $(ps -ef | grep -v grep | grep "$service" | wc -l) > 0 ]]
+        then
+            sudo service $service start &
+        fi
+    }
+    checkstart postgresql
+    ```
+8. Create a postgres user by typing `psql` and then 
+    ```
+    CREATE ROLE <username> WITH LOGIN PASSWORD ‘<password>’ CREATEDB;
+    ```
+9. Create a postgres database while still in psql with 
+    ```
+    CREATE DATABASE <database> OWNER <username>;
+    ```
+10. Create folder `src/github.com/makeict/MESSforMakers` and change to that folder.
 From the folder, run `git clone https://github.com/MakeICT/MESSforMakers.git`
-10. You then need to install all the build dependencies with 
-```
-go get github.com/jmoiron/sqlx github.com/gorilla/sessions github.com/gorilla/mux github.com/justinas/alice github.com/lib/pq
-```
+11. You then need to install all the build dependencies with 
+    ```
+    go get github.com/jmoiron/sqlx github.com/gorilla/sessions github.com/gorilla/mux github.com/justinas/alice github.com/lib/pq
+    ```
   - This list is subject to probably a lot of change. If you get errors that a library cannot be found, just `go get` that library
-11. Prepopulate the database with 
-```
-psql postgres://<username>:<password>@localhost:5432/<database> -f test_tables.sql
-```
-12. Configure the server by opening `config.json` and setting the username, password, and database to whatever you chose earlier, and the host and port to `localhost` and `5432`.
-13. At this point you should be able to type `go install` and then `MESSforMakers` and the server should run. You can then click the “Preview” button at the top of the editor to see the application running in a browser window.
-14. All these instructions should work on any linux distro, but if you don’t use Cloud9 you will have to set up Git, PostgreSQL, and Go manually.
-
-
+12. Run the reload script to create all the tables and populate with test data
+	```
+	cd ~/workspace/src/github.com/makeict/MESSforMakers/sql
+	./reload.sh <postgres username>
+	```
+13. Configure the server by opening `config.json` and setting the username, password, and database to whatever you chose earlier, and the host and port to `localhost` and `5432`.  Make sure that the port is not in quotes. It must be an integer, not a string or the server will panic at runtime trying to connect to the database.
+14. At this point you should be able to type `go install` and then `MESSforMakers` and the server should run. You can then click the “Preview” button at the top of the editor to see the application running in a browser window.
+15. All these instructions should work on any linux distro, but if you don’t use Cloud9 you will have to set up Git, PostgreSQL, and Go manually.
