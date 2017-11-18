@@ -29,17 +29,18 @@ import (
 //separate files for each individual controller
 //a controller is a struct, with methods defined on the struct for each action
 
+// the struct defines what the controller needs to be able to pass into any given page it needs to render
 type UserController struct {
 	Controller
 	DB *sqlx.DB
 }
 
-//var User UserController
-
+// setup function that stores the database pool in the controller, or other things if necessary
 func User(db *sqlx.DB) UserController {
 	return UserController{DB: db}
 }
 
+// a handler
 func (c *UserController) Index() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -51,6 +52,5 @@ func (c *UserController) Index() func(w http.ResponseWriter, r *http.Request) {
 		if err := views.User.Index.Render(w, users); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-
 	}
 }

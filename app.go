@@ -69,11 +69,31 @@ func (a *application) appRouter(c alice.Chain) {
 
 	//declare all the controllers so they are more readable in the routes table
 	userC := controllers.User(a.DB)
+	NIC := controllers.NotImplementedController()
 
 	//set all the routes here. Uses gorilla/mux so routes can use regex,
 	//and following with .Methods() allows for limiting them to only specific HTTP methods
 	router.HandleFunc("/", RootHandler)
-	router.HandleFunc("/user", userC.Index())
+	router.HandleFunc("/signup", NIC.None("signup page")).Methods("GET")
+	router.HandleFunc("/login", NIC.None("login page")).Methods("GET")
+	router.HandleFunc("/login", NIC.None("login processor")).Methods("POST")
+	router.HandleFunc("/user", NIC.None("save new user to db")).Methods("POST")
+	router.HandleFunc("/user/{id:[0-9]+}", NIC.None("show specific user")).Methods("GET")
+	router.HandleFunc("/user/{id:[0-9]+}/edit", NIC.None("form to edit user")).Methods("GET")
+	router.HandleFunc("/user/{id:[0-9]+}", NIC.None("save user update to db")).Methods("PATCH")
+	router.HandleFunc("/user/{id:[0-9]+}", NIC.None("delete user")).Methods("DELETE")
+	router.HandleFunc("/users", userC.Index()).Methods("GET")
+	router.HandleFunc("/user/{id:[0-9]+}/ice", NIC.None("update ice")).Methods("PATCH")
+	router.HandleFunc("/user/{id:[0-9]+}/ice", NIC.None("delete ice")).Methods("DELETE")
+	router.HandleFunc("/user/{id:[0-9]+}/uploadwaiver", NIC.None("uploadwaiver")).Methods("GET")
+	router.HandleFunc("/user/{id:[0-9]+}/uploadwaiver", NIC.None("save waiver")).Methods("POST")
+	router.HandleFunc("/user/{id:[0-9]+}/waiver", NIC.None("show waiver")).Methods("GET")
+	router.HandleFunc("/user/{id:[0-9]+}/waiver", NIC.None("delete waiver")).Methods("DELETE")
+
+	//TODO: need better static file serving to prevent directory browsing
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
+
+	//TODO: need to implement handlers for 404 and 405, the implement router.NotFoundHandler and router.MethodNotAllowedHandler
 
 	//set the app router. Alice will pass all the requests through the middleware chain first,
 	//then to the functions defined above
