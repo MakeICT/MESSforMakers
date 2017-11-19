@@ -1,0 +1,17 @@
+Not a lot, but it's what I've got so far
+
+RESOURCE	|	ACTION	|	VERB	|	HANDLER	|	PATH
+------------+-----------+-----------+-----------+------------------------
+user			new			GET			Create()		/signup
+user			create		POST		Create()		/user
+user			show		GET			Show()			/user/:id
+user			edit		GET			Edit()			/user/:id/edit
+user			update		PATCH		Edit()			/user/:id
+user			delete		DELETE 		Delete()		/user/:id
+user			list		GET			Index()			/users
+user/ice		update		PATCH		Edit_ice()		/user/:id/ice
+user/ice		delete 		DELETE 		Delete_ice()	/user/:id/ice
+user/waiver		new			GET			Create_waiver()	/user/:id/uploadwaiver
+user/waiver		create		POST		Create_waiver() /user/:id/uploadwaiver
+user/waiver		show		GET			Show_waiver()	/user/:id/waiver
+user/waiver		delete		DELETE 		Delete_waiver()	/user/:id/waiver
