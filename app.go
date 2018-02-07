@@ -21,6 +21,7 @@ type application struct {
 	logger      *util.Logger
 	DB          *sqlx.DB
 	Router      http.Handler
+	port        int
 }
 
 func newApplication(config *Config) *application {
@@ -31,7 +32,7 @@ func newApplication(config *Config) *application {
 		fmt.Printf("Error creating logger :: %v", err)
 		panic(1)
 	}
-	loggingMiddleware := loggingMiddleware{true, logger} // currently defaults dump_request to true, needs to be a config option
+	loggingMiddleware := loggingMiddleware{config.Logger.DumpRequest, logger}
 
 	//middlewware that should be called on every request get added to the chain here
 	commonHandlers := alice.New(loggingMiddleware.loggingHandler)
@@ -55,6 +56,7 @@ func newApplication(config *Config) *application {
 		cookieStore: session.NewCookieStore("mess-data"),
 		logger:      logger,
 		DB:          db,
+		port:        config.App.Port,
 	}
 
 	//initialize all the routes
@@ -91,7 +93,7 @@ func (a *application) appRouter(c alice.Chain) {
 	router.HandleFunc("/user/{id:[0-9]+}/waiver", NIC.None("delete waiver")).Methods("DELETE")
 
 	//TODO: need better static file serving to prevent directory browsing
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 
 	//TODO: need to implement handlers for 404 and 405, the implement router.NotFoundHandler and router.MethodNotAllowedHandler
 

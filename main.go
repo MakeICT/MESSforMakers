@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httputil"
+	"strconv"
 	"time"
 
 	"github.com/makeict/MESSforMakers/util"
@@ -38,7 +39,7 @@ func main() {
 	defer app.logger.Close()
 
 	app.logger.Println("Starting Application")
-	app.logger.Fatal(http.ListenAndServe(":"+appPort, app.Router))
+	app.logger.Fatal(http.ListenAndServe(":"+strconv.Itoa(app.port), app.Router))
 
 }
 
