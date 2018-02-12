@@ -39,6 +39,18 @@ func (c *Controller) None(route string) func(w http.ResponseWriter, r *http.Requ
 		if err := views.ErrorPage.Index.Render(w, body); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+	}
+}
 
+func StaticController() Controller {
+	return Controller{}
+}
+
+func (c *Controller) Root() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body := "root!"
+		if err := views.StaticPage.Index.Render(w, body); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }

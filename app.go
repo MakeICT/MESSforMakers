@@ -72,10 +72,11 @@ func (a *application) appRouter(c alice.Chain) {
 	//declare all the controllers so they are more readable in the routes table
 	userC := controllers.User(a.DB)
 	NIC := controllers.NotImplementedController()
+	staticC := controllers.StaticController()
 
 	//set all the routes here. Uses gorilla/mux so routes can use regex,
 	//and following with .Methods() allows for limiting them to only specific HTTP methods
-	router.HandleFunc("/", RootHandler)
+	router.HandleFunc("/", staticC.Root())
 	router.HandleFunc("/signup", NIC.None("signup page")).Methods("GET")
 	router.HandleFunc("/login", NIC.None("login page")).Methods("GET")
 	router.HandleFunc("/login", NIC.None("login processor")).Methods("POST")
@@ -93,6 +94,7 @@ func (a *application) appRouter(c alice.Chain) {
 	router.HandleFunc("/user/{id:[0-9]+}/waiver", NIC.None("delete waiver")).Methods("DELETE")
 
 	//TODO: need better static file serving to prevent directory browsing
+	// see https://groups.google.com/forum/#!topic/golang-nuts/bStLPdIVM6w
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 
 	//TODO: need to implement handlers for 404 and 405, the implement router.NotFoundHandler and router.MethodNotAllowedHandler
