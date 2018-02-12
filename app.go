@@ -76,7 +76,9 @@ func (a *application) appRouter(c alice.Chain) {
 
 	//set all the routes here. Uses gorilla/mux so routes can use regex,
 	//and following with .Methods() allows for limiting them to only specific HTTP methods
-	router.HandleFunc("/", staticC.Root())
+	router.HandleFunc("/", staticC.Root()).Methods("GET")
+	router.HandleFunc("/join", staticC.Join()).Methods("GET")
+	router.HandleFunc("/reserve", staticC.Reservations()).Methods("GET")
 	router.HandleFunc("/signup", NIC.None("signup page")).Methods("GET")
 	router.HandleFunc("/login", NIC.None("login page")).Methods("GET")
 	router.HandleFunc("/login", NIC.None("login processor")).Methods("POST")
@@ -92,6 +94,7 @@ func (a *application) appRouter(c alice.Chain) {
 	router.HandleFunc("/user/{id:[0-9]+}/uploadwaiver", NIC.None("save waiver")).Methods("POST")
 	router.HandleFunc("/user/{id:[0-9]+}/waiver", NIC.None("show waiver")).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}/waiver", NIC.None("delete waiver")).Methods("DELETE")
+	router.HandleFunc("/admin", NIC.None("admin dashboard")).Methods("GET")
 
 	//TODO: need better static file serving to prevent directory browsing
 	// see https://groups.google.com/forum/#!topic/golang-nuts/bStLPdIVM6w

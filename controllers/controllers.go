@@ -54,3 +54,21 @@ func (c *Controller) Root() func(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+func (c *Controller) Join() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body := "join!"
+		if err := views.StaticPage.Join.Render(w, body); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}
+
+func (c *Controller) Reservations() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body := "reserve!"
+		if err := views.StaticPage.Reserve.Render(w, body); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+}

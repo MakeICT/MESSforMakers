@@ -25,6 +25,8 @@ import (
 
 type StaticView struct {
 	View
+	Join    Page
+	Reserve Page
 }
 
 var StaticPage StaticView
@@ -44,4 +46,17 @@ func init() {
 		Template: template.Must(template.New("index").ParseFiles(staticFiles...)),
 		Layout:   "index",
 	}
+
+	staticFiles = append(ErrorFiles(), "templates/static/join.gohtml")
+	StaticPage.Join = Page{
+		Template: template.Must(template.New("index").ParseFiles(staticFiles...)),
+		Layout:   "index",
+	}
+
+	staticFiles = append(ErrorFiles(), "templates/static/reserve.gohtml")
+	StaticPage.Reserve = Page{
+		Template: template.Must(template.New("index").ParseFiles(staticFiles...)),
+		Layout:   "index",
+	}
+
 }
