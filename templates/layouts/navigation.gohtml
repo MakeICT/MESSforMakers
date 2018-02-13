@@ -1,0 +1,67 @@
+{{ define "navigation" }}
+		      	<a href="/" class="brand-logo">MakeICT</a>
+		      	<a href="#" data-activates="mobile-nav" class="button-collapse"><i class="material-icons">menu</i></a>
+		      	
+		      	{{template "top-nav" .}}
+        		
+		      	<ul class="side-nav" id="mobile-nav">
+		      	    
+		        	<li class="logo"><a id="logo-container" href="/"><img src="/static/images/logo-primary.png"></a></li>
+		        	
+		        	{{template "side-nav" .}}
+		        	
+		      	</ul>
+{{end}}
+
+{{define "top-nav"}}
+				<ul class="right hide-on-med-and-down valign-wrapper">
+		        	<li><a class="dropdown-button" href="#!" data-activates="membership-dropdown" data-beloworigin="true">Membership<i class="material-icons right">arrow_drop_down</i></a></li>
+		        	<li><a class="dropdown-button" href="#!" data-activates="admin-dropdown" data-beloworigin="true">Administration<i class="material-icons right">arrow_drop_down</i></a></li>
+		        	<li><a href="" class="valign-wrapper">User Name <img src="/static/images/sample-1s.jpg" class="circle responsive-img"></a></li>
+		      	</ul>
+		      	<ul id="membership-dropdown" class="dropdown-content">
+        		  <li><a href="#!">Dashboard</a></li>
+        		  <li><a href="#!">Transcript</a></li>
+        		  <li><a href="#!">My Events</a></li>
+        		  <li><a href="#!">My Volunteering</a></li>
+        		  <li><a href="#!">My Membership</a></li>
+        		  <li><a href="#!">Edit Profile</a></li>
+        		</ul>
+        		<ul id="admin-dropdown" class="dropdown-content">
+        		  <li><a href="#!">Users</a></li>
+        		  <li><a href="#!">Events</a></li>
+        		  <li><a href="#!">Finances</a></li>
+        		  <li><a href="#!">Equipment</a></li>
+        		</ul>
+{{end}}
+
+{{ define "side-nav" }}
+					<li class=""><a href="/user/1" class="valign-wrapper">Username <img src="static/images/sample-1s.jpg" class="circle responsive-img"></a></li>
+		        		<li class=""><a href="/user/1" class="valign-wrapper">Logout </a></li>
+		        	<li class="no-padding">
+		        		<ul class="collapsible collapsible-accordion">
+		        			<li class="bold"><a class="collapsible-header">Membership</a>
+		        				<div class="collapsible-body">
+		        					<ul>
+		        						<li><a>Dashboard</a></li>
+		        						<li><a>Transcript</a></li>
+		        						<li><a>Edit Profile</a></li>
+		        						<li><a>My Events</a></li>
+		        						<li><a>My Volunteering</a></li>
+		        						<li><a>My Membership</a></li>
+		        					</ul>
+		        				</div>
+		        			</li>
+		        			<li class="bold active"><a class="collapsible-header active">Administration</a>
+		        				<div class="collapsible-body">
+		        					<ul>
+		        						<li><a>Users</a></li>
+		        						<li class="active"><a>Events</a></li>
+		        						<li><a>Finances</a></li>
+		        						<li><a>Equipment</a></li>
+		        					</ul>
+		        				</div>
+		        			</li>
+		        		</ul>
+		        	</li>
+{{end}}

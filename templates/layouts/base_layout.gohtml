@@ -1,0 +1,41 @@
+{{define "index"}}
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+	<link rel="stylesheet" href="/static/css/materialize.css">
+	<link rel="stylesheet" href="/static/css/style.css">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	{{template "meta-head" .}}
+</head>
+<body>
+	<header>
+		<nav class="grey">
+		    <div class="nav-wrapper ">
+		        {{ template "navigation" .}}
+		    </div>
+	  	</nav>
+	</header>
+
+	<main>
+		<div class="container">
+		    
+		    {{template "content" .}}
+			
+		</div>		
+	</main>
+
+	<footer class="page-footer grey">
+		<div class="container">
+			footer content - links, copyright, policies, etc
+		</div>
+	</footer>
+
+	<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+	<script type="text/javascript" src="/static/js/materialize.js"></script>
+	<script type="text/javascript" src="/static/js/style.js"></script>
+
+</body>
+</html>
+{{end}}

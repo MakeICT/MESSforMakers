@@ -18,6 +18,7 @@
 package views
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"path/filepath"
@@ -43,7 +44,7 @@ func StaticFiles() []string {
 func init() {
 	staticFiles := append(ErrorFiles(), "templates/static/index.gohtml")
 	StaticPage.Index = Page{
-		Template: template.Must(template.New("index").ParseFiles(staticFiles...)),
+		Template: template.Must(template.New("base").ParseFiles(staticFiles...)),
 		Layout:   "index",
 	}
 

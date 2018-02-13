@@ -1,59 +1,8 @@
-{{define "index"}}
-    <!DOCTYPE html>
-<html>
-<head>
-	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-	<link rel="stylesheet" href="static/css/materialize.css">
-	<link rel="stylesheet" href="static/css/style.css">
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{{ define "meta-head" }}
 	<title>MakeICT | Join</title>
-</head>
-<body>
-	<header>
-		<nav class="grey">
-		    <div class="nav-wrapper ">
-		      	<a href="/" class="brand-logo">MakeICT</a>
-		      	<a href="#" data-activates="mobile-nav" class="button-collapse"><i class="material-icons">menu</i></a>
-		      	<ul class="right hide-on-med-and-down valign-wrapper">
-		        	<li><a href="login" class="valign-wrapper">Log In</a></li>
-		      	</ul>
-		      	<ul class="side-nav" id="mobile-nav">
-		        	<li class="logo"><a href="/user/1">Logo Here</a></li>
-		        	<li class="logo"><a href="/user/1">Username Here</a></li>
-		        	<li class="no-padding">
-		        		<ul class="collapsible collapsible-accordion">
-		        			<li class="bold"><a class="collapsible-header">Membership</a>
-		        				<div class="collapsible-body">
-		        					<ul>
-		        						<li><a>Dashboard</a></li>
-		        						<li><a>Transcript</a></li>
-		        						<li><a>Edit Profile</a></li>
-		        						<li><a>My Events</a></li>
-		        						<li><a>My Volunteering</a></li>
-		        						<li><a>My Membership</a></li>
-		        					</ul>
-		        				</div>
-		        			</li>
-		        			<li class="bold active"><a class="collapsible-header active">Administration</a>
-		        				<div class="collapsible-body">
-		        					<ul>
-		        						<li><a>Users</a></li>
-		        						<li class="active"><a>Events</a></li>
-		        						<li><a>Finances</a></li>
-		        						<li><a>Equipment</a></li>
-		        					</ul>
-		        				</div>
-		        			</li>
-		        		</ul>
-		        	</li>
-		      	</ul>
-		    </div>
-	  	</nav>
-	</header>
+{{ end }}
 
-	<main>
-		<div class="container">
+{{ define "content" }}
 		    <div class="row">
 		        <h3 class="header">Join</h2>
 		    </div>
@@ -75,21 +24,4 @@
 		            </a>
 		        </div>
 		    </div>
-		    
-		    
-		</div>		
-	</main>
-
-	<footer class="page-footer grey">
-		<div class="container">
-			footer content - links, copyright, policies, etc
-		</div>
-	</footer>
-
-	<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-	<script type="text/javascript" src="static/js/materialize.js"></script>
-	<script type="text/javascript" src="static/js/style.js"></script>
-
-</body>
-</html>
-{{end}}
+{{ end }}
