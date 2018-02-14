@@ -1,0 +1,125 @@
+{{ define "meta-head" }}
+    <title>MakeICT | Sign Up</title>
+{{ end }}
+
+{{ define "content" }}
+
+    {{.}}
+    
+<div class="row">
+    <h4>Register for MakeICT</h4>
+    <form class="col s12" method="POST" action="/user">
+      <div class="row">
+        <div class="input-field col s6">
+          <input id="first_name" type="text" class="validate">
+          <label for="first_name">First Name</label>
+        </div>
+        <div class="input-field col s6">
+          <input id="last_name" type="text" class="validate">
+          <label for="last_name">Last Name</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s6">
+          <input id="address" type="text" class="validate">
+          <label for="address">Address</label>
+        </div>
+        <div class="input-field col s6">
+          <input id="address2" type="text" class="validate">
+          <label for="address2">Address Line 2</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s12 m4">
+          <input id="city" type="text" class="validate">
+          <label for="city">City</label>
+        </div>
+        <div class="input-field col s12 m4">
+           <div class="select-wrapper">
+               <span class="caret">▼</span>
+               <input type="text" class="select-dropdown" data-activates="select-options-49f6838c-5df1-fbc9-2789-e3a22d32b137" value="Choose your option"><ul id="select-options-49f6838c-5df1-fbc9-2789-e3a22d32b137" class="dropdown-content select-dropdown" style="width: 441.266px; position: absolute; top: 0px; left: 0px; display: none; opacity: 1;">
+                <li class="disabled">
+                    <span>Choose your option</span>
+                </li>
+                <li class="">
+                    <span>Option 1</span>
+                </li>
+                <li class="">
+                    <span>Option 2</span>
+                </li>
+                <li class=""><span>Option 3</span></li>
+            </ul>
+            <select data-select-id="49f6838c-5df1-fbc9-2789-e3a22d32b137" class="initialized">
+                  <option value="" disabled="" selected="">Choose your option</option>
+                  <option value="1">Option 1</option>
+                  <option value="2">Option 2</option>
+                  <option value="3">Option 3</option>
+                </select></div>
+            <label>State</label>
+        </div>
+        <div class="input-field col s12 m4">
+          <input id="zip" type="text" class="validate">
+          <label for="zip">Zip Code</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s12">
+          <input id="phone" type="tel" class="validate">
+          <label for="phone">Phone Number</label>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col s12 m3" style="margin-top: 14px; padding-left: 11px">
+            <input id="ofage" type="checkbox">
+            <label for="ofage" >Over 18?</label>
+        </div>
+        <div class="input-field col s12 m4">
+          <input id="guardian" type="text" class="validate">
+          <label for="guardian">Parent or Guardian</label>
+        </div>
+      </div>
+      <div class="row">
+          <h4>Emergency Contact</h4>
+          <div class="input-field col s12 m4">
+              <input id="ice_name" type="text" class="validate">
+              <label for="ice_name">Conact Name</label>
+            </div>
+            <div class="input-field col s12 m4">
+              <input id="ice_phone" type="text" class="validate">
+              <label for="ice_phone">Contact Phone</label>
+            </div>
+            <div class="input-field col s12 m4">
+              <input id="ice_relation" type="text" class="validate">
+              <label for="ice_relation">Relationship</label>
+            </div>
+      </div>
+      <div class="row">
+          <h4>Login Details</h4>
+          <div class="input-field col s12 m6">
+              <input id="email" type="email" class="validate">
+              <label for="email">Email</label>
+            </div>
+            <div class="input-field col s12 m6">
+              <input id="email_check" type="email" class="validate">
+              <label for="email_check">Repeat Email</label>
+            </div>
+            </div>
+            <div class="row">
+            <div class="input-field col s12 m6">
+              <input id="password" type="password" class="validate">
+              <label for="password">Password</label>
+            </div>
+            <div class="input-field col s12 m6">
+              <input id="password_check" type="password" class="validate">
+              <label for="password_check">Repeat Password</label>
+            </div>
+      </div>
+      <div class="row">
+          <div class="input-field">
+              <input id="submit" type="submit" class="btn">
+          </div>
+      </div>
+    </form>
+  </div>
+
+{{ end }}

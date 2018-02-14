@@ -54,3 +54,24 @@ func (c *UserController) Index() func(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+func (c *UserController) Create() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		if r.Method == "GET" {
+
+			body := ""
+			if err := views.User.New.Render(w, body); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+
+		} else if r.Method == "POST" {
+			body := "Arrived via post request. Not set up to save in DB yet"
+			// need a User.Validate() function to check a populated User object for correctness, that would be a database function.
+			// the User object should be passed around, so if there are errors, it can be reused to populate the form again
+			if err := views.ErrorPage.Index.Render(w, body); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+		}
+	}
+}

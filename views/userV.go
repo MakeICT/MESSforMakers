@@ -40,12 +40,16 @@ func UserFiles() []string {
 }
 
 func init() {
-	indexFiles := append(UserFiles(), "templates/user/index.gohtml")
+	userFiles := append(UserFiles(), "templates/user/index.gohtml")
 	User.Index = Page{
-		Template: template.Must(template.New("index").ParseFiles(indexFiles...)),
+		Template: template.Must(template.New("index").ParseFiles(userFiles...)),
 		Layout:   "index",
 	}
 
 	//parse other needed templates here, for each page
-
+	userFiles = append(UserFiles(), "templates/user/new.gohtml")
+	User.New = Page{
+		Template: template.Must(template.New("index").ParseFiles(userFiles...)),
+		Layout:   "index",
+	}
 }

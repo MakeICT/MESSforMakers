@@ -18,7 +18,6 @@
 package views
 
 import (
-	"fmt"
 	"html/template"
 	"log"
 	"path/filepath"
