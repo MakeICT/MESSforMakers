@@ -3,114 +3,97 @@
 {{ end }}
 
 {{ define "content" }}
-
-    {{.}}
-    
-<div class="row">
+  <div class="row">
     <h4>Register for MakeICT</h4>
-    <form class="col s12" method="POST" action="/user">
+    <form class="col s12" method="POST" action="/signup">
       <div class="row">
         <div class="input-field col s6">
-          <input id="first_name" type="text" class="validate">
+          <input id="first_name" name="firstname" type="text" class="validate" {{if .Person.FirstName}}value="{{.Person.FirstName}}"{{end}}>
           <label for="first_name">First Name</label>
         </div>
         <div class="input-field col s6">
-          <input id="last_name" type="text" class="validate">
+          <input id="last_name" name="lastname" type="text" class="validate" {{if .Person.LastName}}value="{{.Person.LastName}}"{{end}}>
           <label for="last_name">Last Name</label>
         </div>
       </div>
       <div class="row">
         <div class="input-field col s6">
-          <input id="address" type="text" class="validate">
+          <input id="address" name="Address.Line1" type="text" class="validate" {{if .Person.Address.Line1}}value="{{.Person.Address.Line1}}"{{end}}>
           <label for="address">Address</label>
         </div>
         <div class="input-field col s6">
-          <input id="address2" type="text" class="validate">
+          <input id="address2" name="Address.Line2" type="text" class="validate" {{if .Person.Address.Line2}}value="{{.Person.Address.Line2}}"{{end}}>
           <label for="address2">Address Line 2</label>
         </div>
       </div>
       <div class="row">
         <div class="input-field col s12 m4">
-          <input id="city" type="text" class="validate">
+          <input id="city" name="Address.City" type="text" class="validate" value="{{.Person.Address.City}}">
           <label for="city">City</label>
         </div>
         <div class="input-field col s12 m4">
-           <div class="select-wrapper">
-               <span class="caret">▼</span>
-               <input type="text" class="select-dropdown" data-activates="select-options-49f6838c-5df1-fbc9-2789-e3a22d32b137" value="Choose your option"><ul id="select-options-49f6838c-5df1-fbc9-2789-e3a22d32b137" class="dropdown-content select-dropdown" style="width: 441.266px; position: absolute; top: 0px; left: 0px; display: none; opacity: 1;">
-                <li class="disabled">
-                    <span>Choose your option</span>
-                </li>
-                <li class="">
-                    <span>Option 1</span>
-                </li>
-                <li class="">
-                    <span>Option 2</span>
-                </li>
-                <li class=""><span>Option 3</span></li>
-            </ul>
-            <select data-select-id="49f6838c-5df1-fbc9-2789-e3a22d32b137" class="initialized">
-                  <option value="" disabled="" selected="">Choose your option</option>
-                  <option value="1">Option 1</option>
-                  <option value="2">Option 2</option>
-                  <option value="3">Option 3</option>
-                </select></div>
+            <select class="initialized" name="Address.State">
+                  <option value="" disabled="" {{if not .Person.Address.State}}selected{{end}}>Choose your state</option>
+                  <option value="AL" {{if eq .Person.Address.State "AL" }}selected{{end}}>Alabama</option>
+                  <option value="AK" {{if eq .Person.Address.State "AK" }}selected{{end}}>Alaska</option>
+                  <option value="KS" {{if eq .Person.Address.State "KS" }}selected{{end}}>Kansas</option>
+                </select>
             <label>State</label>
         </div>
         <div class="input-field col s12 m4">
-          <input id="zip" type="text" class="validate">
+          <input id="zip" name="Address.Zip" type="text" class="validate" {{if .Person.Address.Zip}}value="{{.Person.Address.Zip}}"{{end}}>
           <label for="zip">Zip Code</label>
         </div>
       </div>
       <div class="row">
         <div class="input-field col s12">
-          <input id="phone" type="tel" class="validate">
+          <input id="phone" name="phone" type="tel" class="validate" {{if .Person.Phone}}value="{{.Person.Phone}}"{{end}}>
           <label for="phone">Phone Number</label>
         </div>
       </div>
       <div class="row">
         <div class="col s12 m3" style="margin-top: 14px; padding-left: 11px">
-            <input id="ofage" type="checkbox">
+            <input id="ofage" name="ofage" type="checkbox" {{if .Person.OfAge}}checked{{end}}>
             <label for="ofage" >Over 18?</label>
         </div>
         <div class="input-field col s12 m4">
-          <input id="guardian" type="text" class="validate">
+          <input id="guardian" name="guardian" type="text" class="validate" {{if .Person.Guardian}}value="{{.Person.Guardian}}"{{end}}>
           <label for="guardian">Parent or Guardian</label>
         </div>
       </div>
       <div class="row">
           <h4>Emergency Contact</h4>
           <div class="input-field col s12 m4">
-              <input id="ice_name" type="text" class="validate">
+              <input id="ice_name" name="ice.name" type="text" class="validate" {{if .Person.Ice.Name}}value="{{.Person.Ice.Name}}"{{end}}>
               <label for="ice_name">Conact Name</label>
             </div>
             <div class="input-field col s12 m4">
-              <input id="ice_phone" type="text" class="validate">
+              <input id="ice_phone" name="ice.phone" type="text" class="validate" {{if .Person.Ice.Phone}}value="{{.Person.Ice.Phone}}"{{end}}>
               <label for="ice_phone">Contact Phone</label>
             </div>
             <div class="input-field col s12 m4">
-              <input id="ice_relation" type="text" class="validate">
+              <input id="ice_relation" name="ice.relation" type="text" class="validate" {{if .Person.Ice.Relation}}value="{{.Person.Ice.Relation}}"{{end}}>
               <label for="ice_relation">Relationship</label>
             </div>
       </div>
       <div class="row">
           <h4>Login Details</h4>
           <div class="input-field col s12 m6">
-              <input id="email" type="email" class="validate">
+              <input id="email" type="email" name="email" class="validate" {{if .Person.Email}}value="{{.Person.Email}}"{{end}}>
               <label for="email">Email</label>
             </div>
             <div class="input-field col s12 m6">
-              <input id="email_check" type="email" class="validate">
+              <input id="email_check" type="email" name="emailcheck" class="validate" {{if .Person.Email}}value="{{.Person.Email}}"{{end}}>
               <label for="email_check">Repeat Email</label>
             </div>
             </div>
             <div class="row">
             <div class="input-field col s12 m6">
-              <input id="password" type="password" class="validate">
+              <input id="password" type="password" name="password" class="validate" {{if .Person.Password}}value="{{.Person.Password}}"{{end}}>
               <label for="password">Password</label>
             </div>
             <div class="input-field col s12 m6">
-              <input id="password_check" type="password" class="validate">
+              <input id="password_check" type="password" name="passwordcheck" class="validate" {{if .Person.Password}}value="{{.Person.Password}}"{{end}}>
               <label for="password_check">Repeat Password</label>
             </div>
       </div>
