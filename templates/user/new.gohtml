@@ -7,17 +7,21 @@
     <h4>Register for MakeICT</h4>
     <form class="col s12" method="POST" action="/signup">
       <div class="row">
-        <div class="input-field col s6">
+        <div class="col s6">
+          {{if .ErrorMessages.FirstName}}<p class="red-text text-darken-3">{{.ErrorMessages.FirstName}}</p>{{end}}
+          <div class="input-field ">
           <input id="first_name" name="firstname" type="text" class="validate" {{if .Person.FirstName}}value="{{.Person.FirstName}}"{{end}}>
           <label for="first_name">First Name</label>
-        </div>
+        </div></div>
         <div class="input-field col s6">
+          {{if .ErrorMessages.LastName}}<p class="red-text text-darken-3">{{.ErrorMessages.LastName}}</p>{{end}}
           <input id="last_name" name="lastname" type="text" class="validate" {{if .Person.LastName}}value="{{.Person.LastName}}"{{end}}>
           <label for="last_name">Last Name</label>
         </div>
       </div>
       <div class="row">
         <div class="input-field col s6">
+          {{if .ErrorMessages.Address}}<p class="red-text text-darken-3">{{.ErrorMessages.Address}}</p>{{end}}
           <input id="address" name="Address.Line1" type="text" class="validate" {{if .Person.Address.Line1}}value="{{.Person.Address.Line1}}"{{end}}>
           <label for="address">Address</label>
         </div>
@@ -47,22 +51,26 @@
       </div>
       <div class="row">
         <div class="input-field col s12">
+          {{if .ErrorMessages.Phone}}<p class="red-text text-darken-3">{{.ErrorMessages.Phone}}</p>{{end}}
           <input id="phone" name="phone" type="tel" class="validate" {{if .Person.Phone}}value="{{.Person.Phone}}"{{end}}>
           <label for="phone">Phone Number</label>
         </div>
       </div>
       <div class="row">
-        <div class="col s12 m3" style="margin-top: 14px; padding-left: 11px">
+        <div class="col s12 m3" >
+          {{if .ErrorMessages.OfAge}}<p class="red-text text-darken-3">{{.ErrorMessages.OfAge}}</p>{{end}}
             <input id="ofage" name="ofage" type="checkbox" {{if .Person.OfAge}}checked{{end}}>
             <label for="ofage" >Over 18?</label>
         </div>
         <div class="input-field col s12 m4">
+           {{if .ErrorMessages.Guardian}}<p class="red-text text-darken-3">{{.ErrorMessages.Guardian}}</p>{{end}}
           <input id="guardian" name="guardian" type="text" class="validate" {{if .Person.Guardian}}value="{{.Person.Guardian}}"{{end}}>
           <label for="guardian">Parent or Guardian</label>
         </div>
       </div>
       <div class="row">
           <h4>Emergency Contact</h4>
+          {{if .ErrorMessages.Ice}}<p class="red-text text-darken-3">{{.ErrorMessages.Ice}}</p>{{end}}
           <div class="input-field col s12 m4">
               <input id="ice_name" name="ice.name" type="text" class="validate" {{if .Person.Ice.Name}}value="{{.Person.Ice.Name}}"{{end}}>
               <label for="ice_name">Conact Name</label>
@@ -79,6 +87,7 @@
       <div class="row">
           <h4>Login Details</h4>
           <div class="input-field col s12 m6">
+            {{if .ErrorMessages.Email}}<p class="red-text text-darken-3">{{.ErrorMessages.Email}}</p>{{end}}
               <input id="email" type="email" name="email" class="validate" {{if .Person.Email}}value="{{.Person.Email}}"{{end}}>
               <label for="email">Email</label>
             </div>
@@ -89,6 +98,7 @@
             </div>
             <div class="row">
             <div class="input-field col s12 m6">
+              {{if .ErrorMessages.Password}}<p class="red-text text-darken-3">{{.ErrorMessages.Password}}</p>{{end}}
               <input id="password" type="password" name="password" class="validate" {{if .Person.Password}}value="{{.Person.Password}}"{{end}}>
               <label for="password">Password</label>
             </div>
