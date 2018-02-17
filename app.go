@@ -79,9 +79,10 @@ func (a *application) appRouter(c alice.Chain) {
 	router.HandleFunc("/", staticC.Root()).Methods("GET")
 	router.HandleFunc("/join", staticC.Join()).Methods("GET")
 	router.HandleFunc("/reserve", staticC.Reservations()).Methods("GET")
+	// Routes that utilize the same controller and switch inside the controller on method type can use the same table entry.
 	router.HandleFunc("/signup", userC.Create()).Methods("GET", "POST")
 	router.HandleFunc("/login", NIC.None("login page")).Methods("GET", "POST")
-	router.HandleFunc("/user/{id:[0-9]+}", NIC.None("show specific user")).Methods("GET")
+	router.HandleFunc("/user/{id:[0-9]+}", userC.Show()).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}/edit", NIC.None("form to edit user")).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}", NIC.None("save user update to db")).Methods("PATCH")
 	router.HandleFunc("/user/{id:[0-9]+}", NIC.None("delete user")).Methods("DELETE")

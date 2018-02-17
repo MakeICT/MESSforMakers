@@ -61,11 +61,14 @@ func (c *UserController) Index() func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Create() handles both the request to create, and the posting of the user details.
+// Renders the empty form, prefilled form with errors if the form doesn't validate, and redirects to the user's dashboard if the creation is successful.
 func (c *UserController) Create() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Method == "GET" {
 
+			//TODO Can this be factored out?  These structs are only here to make the template happy on initial load.
 			user := new(models.User)
 			errMessages := new(models.UserErrors)
 			body := struct {
@@ -76,16 +79,22 @@ func (c *UserController) Create() func(w http.ResponseWriter, r *http.Request) {
 				ErrorMessages: errMessages,
 				Person:        user,
 			}
+
 			if err := views.User.New.Render(w, body); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 
 		} else if r.Method == "POST" {
 
+			//A user object can be passed around to contain and preserve partial form data that needs revision and error correction.
 			user := new(models.User)
+
+			//the model should not be handling things like errors and http. Send the model only the minimum necessary for parsing the form.
 			if err := user.ParseSignupForm(r, c.Decoder); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
+
+			//when the form has parsed, begin validating the data, and filling the form with whatever can be salvaged from an invalid submission.
 			if errMessages := user.ValidateUser(); errMessages != nil {
 				fmt.Printf("%+v\n", errMessages)
 				body := struct {
@@ -101,11 +110,16 @@ func (c *UserController) Create() func(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			//only create the user in the database after all logic-level validation has passed. It's still possible to fail at this point
+			// because the database will enforce types.
+			//TODO since it can still fail at this point, replace internal server error with a more friendly rendering of the signup form.
+			//Nil return only implies success, the existence of the user.ID is more important
 			if err := user.CreateUser(c.DB); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 
+			//use StatusSeeOther for redirect.
 			http.Redirect(w, r, "/user/"+strconv.Itoa(user.ID), http.StatusSeeOther)
 		}
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+//TODO abstract into the main model file, this could be used by other controllers
 type Address struct {
 	Line1 string
 	Line2 string
@@ -36,6 +37,7 @@ type User struct {
 	PasswordCheck string `schema:"passwordcheck"`
 }
 
+//only needs strings, and no nested structs.  One message string can be used to describe any address or ICE issues
 type UserErrors struct {
 	FirstName string
 	LastName  string
@@ -75,6 +77,7 @@ func GetAllUsers(db *sqlx.DB, count, offset int) ([]User, error) {
 	return users, nil
 }
 
+// handles getting the form data out of the http.Request and into an easier format to work with.
 func (u *User) ParseSignupForm(r *http.Request, d *schema.Decoder) error {
 	if err := r.ParseForm(); err != nil {
 		return err
@@ -85,55 +88,53 @@ func (u *User) ParseSignupForm(r *http.Request, d *schema.Decoder) error {
 	return nil
 }
 
-//Validate a user object, return a slice of strings with error messages if it fails.
+// Validate a user object, return a struct of strings with error messages if it fails.
+// Destructive function, modifies the user if there are irreconcilable errors with password or email.
 func (u *User) ValidateUser() *UserErrors {
 	ue := new(UserErrors)
 	errorsFound := false
 
-	//FirstName
+	//for simple non-regex validators, implement directly for now.
 	if len(u.FirstName) < 2 {
 		ue.FirstName = "Please enter your full name"
 		errorsFound = true
 	}
-	//LastName
+
 	if len(u.LastName) < 2 {
 		ue.LastName = "Please enter your full name"
 		errorsFound = true
 	}
-	// Address
+
+	// extract regex validators into helper functions, then store the errors into the error struct.
 	if err := validAddress(u.Address); err != nil {
 		ue.Address = err.Error()
 		errorsFound = true
 	}
-	// Phone
+
 	if err := validPhone(u.Phone); err != nil {
 		ue.Address = err.Error()
 		errorsFound = true
 	}
-	// OfAge
-	// Guardian
+
 	if u.OfAge == false && u.Guardian == "" {
-		ue.Guardian = "If you are under 18, you must have the mermission of a parent or legal guardian."
+		ue.Guardian = "If you are under 18, you must have the permission of a parent or legal guardian."
 		errorsFound = true
 	}
-	// Ice
+
 	if err := validIce(u.Ice); err != nil {
 		ue.Ice = err.Error()
 		errorsFound = true
 	}
-	// Email
-	// EmailCheck
+
 	if err := validEmail(u.Email, u.EmailCheck); err != nil {
-		//if the emails are invalid for any reason, then delete any value in EmailCheck
+		//if the emails are invalid for any reason, then delete any value in EmailCheck so it does not render back in the form for correction
 		u.EmailCheck = ""
 		ue.Email = err.Error()
 		errorsFound = true
 	}
 
-	// Password
-	// PasswordCheck
 	if err := validPassword(u.Password, u.PasswordCheck); err != nil {
-		//if the passwords are invalid for any reason, clear both
+		//if the passwords are invalid for any reason, clear both so the operator can re-enter
 		u.Password = ""
 		u.PasswordCheck = ""
 		ue.Password = err.Error()
@@ -148,6 +149,7 @@ func (u *User) ValidateUser() *UserErrors {
 }
 
 //create user (need user details populated)
+//TODO actually store the user in the database. Nil return implies success.
 func (u *User) CreateUser(db *sqlx.DB) error {
 	return nil
 }
