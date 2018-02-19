@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 	"github.com/jmoiron/sqlx"
 
@@ -121,6 +122,65 @@ func (c *UserController) Create() func(w http.ResponseWriter, r *http.Request) {
 
 			//use StatusSeeOther for redirect.
 			http.Redirect(w, r, "/user/"+strconv.Itoa(user.ID), http.StatusSeeOther)
+		}
+	}
+}
+
+func (c *UserController) Show() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		id_string := mux.Vars(r)["id"]
+
+		u := new(models.User)
+		id, err := strconv.Atoi(id_string)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		u.ID = id
+
+		if err := u.GetUser(c.DB); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		body := struct{ Person *models.User }{Person: u}
+
+		if err := views.User.Show.Render(w, body); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+	}
+}
+
+func (c *UserController) Edit() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		if r.Method == "GET" {
+			id_string := mux.Vars(r)["id"]
+
+			u := new(models.User)
+			id, err := strconv.Atoi(id_string)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			u.ID = id
+
+			if err := u.GetUser(c.DB); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			body := struct{ Person *models.User }{Person: u}
+
+			if err := views.User.Show.Render(w, body); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		} else if r.Method == "PATCH" {
+			//get the stuff from the postform and validate and rerender and stuff
 		}
 	}
 }

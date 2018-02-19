@@ -52,4 +52,16 @@ func init() {
 		Template: template.Must(template.New("index").ParseFiles(userFiles...)),
 		Layout:   "index",
 	}
+
+	userFiles = append(UserFiles(), "templates/user/show.gohtml")
+	User.Show = Page{
+		Template: template.Must(template.New("index").ParseFiles(userFiles...)),
+		Layout:   "index",
+	}
+
+	userFiles = append(UserFiles(), "templates/user/edit.gohtml")
+	User.Edit = Page{
+		Template: template.Must(template.New("index").ParseFiles(userFiles...)),
+		Layout:   "index",
+	}
 }

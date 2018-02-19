@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/schema"
@@ -24,16 +25,17 @@ type Ice struct {
 
 type User struct {
 	ID            int
-	FirstName     string `schema:"firstname"`
-	LastName      string `schema:"lastname"`
+	FirstName     string `schema:"firstname" db:"first_name"`
+	LastName      string `schema:"lastname" db:"last_name"`
 	Address       Address
-	Phone         string `schema:"phone"`
+	Phone         string `schema:"phone" db:"phone"`
 	OfAge         bool   `schema:"ofage"`
+	DOB           string `schema:"dob"`
 	Guardian      string `schema:"guardian"`
 	Ice           Ice    `schema:"ice"`
-	Email         string `schema:"email"`
+	Email         string `schema:"email" db:"username"`
 	EmailCheck    string `schema:"emailcheck"`
-	Password      string `schema:"password"`
+	Password      string `schema:"password" db:"password"`
 	PasswordCheck string `schema:"passwordcheck"`
 }
 
@@ -44,6 +46,7 @@ type UserErrors struct {
 	Address   string
 	Phone     string
 	OfAge     string
+	DOB       string
 	Guardian  string
 	Ice       string
 	Email     string
@@ -51,7 +54,14 @@ type UserErrors struct {
 }
 
 //get one user (need user ID populated)
-func (u *User) getUser(db *sqlx.DB) error {
+func (u *User) GetUser(db *sqlx.DB) error {
+
+	query := "SELECT id, first_name, last_name, username, phone, password FROM member WHERE id = $1"
+
+	if err := db.Get(u, query, u.ID); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -121,6 +131,11 @@ func (u *User) ValidateUser() *UserErrors {
 		errorsFound = true
 	}
 
+	if err := validDob(u.DOB); err != nil {
+		// ue.DOB = err.Error()
+		// errorsFound = true
+	}
+
 	if err := validIce(u.Ice); err != nil {
 		ue.Ice = err.Error()
 		errorsFound = true
@@ -151,6 +166,46 @@ func (u *User) ValidateUser() *UserErrors {
 //create user (need user details populated)
 //TODO actually store the user in the database. Nil return implies success.
 func (u *User) CreateUser(db *sqlx.DB) error {
+
+	var query string
+	var guestStatus int
+	var guestRole int
+
+	//TODO sanitize strings to prevent SQL injection
+
+	//Fetch the ID for guest status from DB
+	query = "SELECT id FROM membership_status WHERE name = 'guest'"
+	db.Get(&guestStatus, query)
+
+	//fetch the ID for the most restricted role from DB
+	query = "SELECT id FROM rbac_role WHERE name = 'guest'"
+	db.Get(&guestRole, query)
+
+	query = `INSERT INTO member (
+		first_name, 
+		last_name,
+		username, 
+		password, 
+		dob, 
+		phone, 
+		membership_status_id, 
+		rbac_role_id 
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+
+	//replace queryrow/scan with sqlx get. needs proper struct tags to work
+	err := db.QueryRow(query,
+		u.FirstName,
+		u.LastName,
+		u.Email,
+		u.Password,
+		"1-1-1970",
+		u.Phone,
+		guestStatus,
+		guestRole,
+	).Scan(&u.ID)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -180,11 +235,30 @@ func validIce(i Ice) error {
 	return nil
 }
 
-func validEmail(e string, ec string) error {
+func validDob(d string) error {
+	if d == "" {
+		return fmt.Errorf("Must enter a valid date of birth")
+	}
 	return nil
 }
 
-func validPassword(p string, pw string) error {
+func validEmail(e string, ec string) error {
+	if e == "" {
+		return fmt.Errorf("Must enter a valid email address")
+	}
+	if e != ec {
+		return fmt.Errorf("Email addresses must match")
+	}
+	return nil
+}
+
+func validPassword(p string, pc string) error {
+	if p == "" {
+		return fmt.Errorf("Must enter a valid password")
+	}
+	if p != pc {
+		return fmt.Errorf("Passwords must match")
+	}
 	return nil
 }
 

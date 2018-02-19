@@ -37,6 +37,8 @@ CREATE TABLE rbac_role (
 );
 COMMENT ON TABLE rbac_role IS 'Groups permissions to assign to a member';
 
+INSERT INTO rbac_role (name) VALUES ('guest');
+
 CREATE TABLE rbac_role_permission_rel (
       id SERIAL PRIMARY KEY
     , rbac_role_id INTEGER NOT NULL REFERENCES rbac_role(id) ON DELETE CASCADE
@@ -58,7 +60,7 @@ CREATE TABLE rbac_role_group_rel (
 	, rbac_group_id INTEGER NOT NULL REFERENCES rbac_group(id) ON DELETE CASCADE
 	, UNIQUE (rbac_role_id, rbac_group_id)
 );
-COMMENT ON TABLE rbac_role_group_rel IS 'links the group of permissions to a spevific role';
+COMMENT ON TABLE rbac_role_group_rel IS 'links the group of permissions to a specific role';
 
 CREATE TABLE rbac_group_permission_rel (
 	id SERIAL PRIMARY KEY
@@ -92,7 +94,8 @@ INSERT INTO membership_options (name, is_recurring, period) VALUES ('One month',
 
 CREATE TABLE member (
       id SERIAL PRIMARY KEY
-    , name TEXT NOT NULL
+    , first_name TEXT NOT NULL
+    , last_name TEXT NOT NULL
     , username TEXT NOT NULL -- must be valid email
 	, password TEXT NOT NULL
     , dob DATE NOT NULL
@@ -102,7 +105,7 @@ CREATE TABLE member (
 	, membership_option INTEGER REFERENCES membership_options(id)
 	, rbac_role_id INTEGER NOT NULL REFERENCES rbac_role(id)
     , created_at TIMESTAMP NOT NULL DEFAULT now()
-    , updated_at TIMESTAMP
+    , updated_at TIMESTAMP NOT NULL DEFAULT now()
     , UNIQUE (username)  -- members cannot sign up for multiple accounts with the same email
 );
 COMMENT ON TABLE member IS 'Core table of all members and guests';
