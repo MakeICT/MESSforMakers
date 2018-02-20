@@ -66,8 +66,3 @@ func (l *loggingMiddleware) loggingHandler(h http.Handler) http.Handler {
 		l.logger.Printf("[%s] %s %v\n", r.Method, r.URL.String(), t2.Sub(t1))
 	})
 }
-
-// RootHandler is obsolete, will all be handled in controllers.
-func RootHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "you got the root handler")
-}

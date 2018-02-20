@@ -26,12 +26,13 @@ import (
 type UserView struct {
 	View
 	//add custom pages for a controller here
+	Login Page
 }
 
 var User UserView
 
 func UserFiles() []string {
-	files, err := filepath.Glob("templates/user/includes/*.gohtml")
+	files, err := filepath.Glob("templates/user/include/*.gohtml")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -61,6 +62,12 @@ func init() {
 
 	userFiles = append(UserFiles(), "templates/user/edit.gohtml")
 	User.Edit = Page{
+		Template: template.Must(template.New("index").ParseFiles(userFiles...)),
+		Layout:   "index",
+	}
+
+	userFiles = append(UserFiles(), "templates/user/login.gohtml")
+	User.Login = Page{
 		Template: template.Must(template.New("index").ParseFiles(userFiles...)),
 		Layout:   "index",
 	}

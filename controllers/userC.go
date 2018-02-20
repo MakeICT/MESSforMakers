@@ -27,6 +27,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/makeict/MESSforMakers/models"
+	"github.com/makeict/MESSforMakers/session"
 	"github.com/makeict/MESSforMakers/views"
 )
 
@@ -36,15 +37,16 @@ import (
 // the struct defines what the controller needs to be able to pass into any given page it needs to render
 type UserController struct {
 	Controller
-	DB      *sqlx.DB
-	Decoder *schema.Decoder
+	DB          *sqlx.DB
+	Decoder     *schema.Decoder
+	CookieStore *session.CookieStore
 }
 
 // setup function that stores the database pool in the controller, or other things if necessary
-func User(db *sqlx.DB) UserController {
+func User(db *sqlx.DB, cs *session.CookieStore) UserController {
 	//TODO make a map for holding state names and abbreviations, prepopulate it at setup time with a list read from file.
 	// list available here: https://gist.github.com/mshafrir/2646763
-	return UserController{DB: db, Decoder: schema.NewDecoder()}
+	return UserController{DB: db, Decoder: schema.NewDecoder(), CookieStore: cs}
 }
 
 // a handler
@@ -83,6 +85,7 @@ func (c *UserController) Create() func(w http.ResponseWriter, r *http.Request) {
 
 			if err := views.User.New.Render(w, body); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
 			}
 
 		} else if r.Method == "POST" {
@@ -93,6 +96,7 @@ func (c *UserController) Create() func(w http.ResponseWriter, r *http.Request) {
 			//the model should not be handling things like errors and http. Send the model only the minimum necessary for parsing the form.
 			if err := user.ParseSignupForm(r, c.Decoder); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
 			}
 
 			//when the form has parsed, begin validating the data, and filling the form with whatever can be salvaged from an invalid submission.
@@ -172,15 +176,96 @@ func (c *UserController) Edit() func(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+			ue := new(models.UserErrors)
+			body := struct {
+				Person        *models.User
+				ErrorMessages *models.UserErrors
+			}{
+				Person:        u,
+				ErrorMessages: ue,
+			}
 
-			body := struct{ Person *models.User }{Person: u}
-
-			if err := views.User.Show.Render(w, body); err != nil {
+			if err := views.User.Edit.Render(w, body); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-		} else if r.Method == "PATCH" {
-			//get the stuff from the postform and validate and rerender and stuff
+		} else if r.Method == "POST" {
+
+			id_string := mux.Vars(r)["id"]
+
+			//A user object can be passed around to contain and preserve partial form data that needs revision and error correction.
+			user := new(models.User)
+			id, err := strconv.Atoi(id_string)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			user.ID = id
+
+			//the model should not be handling things like errors and http. Send the model only the minimum necessary for parsing the form.
+			if err := user.ParseSignupForm(r, c.Decoder); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			//when the form has parsed, begin validating the data, and filling the form with whatever can be salvaged from an invalid submission.
+			if errMessages := user.ValidateUser(); errMessages != nil {
+				body := struct {
+					Person        *models.User
+					ErrorMessages *models.UserErrors
+				}{
+					Person:        user,
+					ErrorMessages: errMessages,
+				}
+				if err := views.User.Edit.Render(w, body); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
+				return
+			}
+
+			//only update the user in the database after all logic-level validation has passed. It's still possible to fail at this point
+			// because the database will enforce types.
+			//TODO since it can still fail at this point, replace internal server error with a more friendly rendering of the signup form.
+			//Nil return only implies success, the existence of the user.ID is more important
+			if err := user.UpdateUser(c.DB); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			//use StatusSeeOther for redirect.
+			http.Redirect(w, r, "/user/"+strconv.Itoa(user.ID), http.StatusSeeOther)
+		}
+	}
+}
+
+func (c *UserController) Login() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		if r.Method == "GET" {
+
+			type Login struct {
+				Username string
+				Password string
+				Remember bool
+			}
+			body := struct {
+				Login Login
+			}{
+				Login: Login{
+					Username: "",
+					Password: "",
+					Remember: false,
+				},
+			}
+
+			if err := views.User.Login.Render(w, body); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+		} else if r.Method == "POST" {
+
+			//use StatusSeeOther for redirect.
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
 		}
 	}
 }

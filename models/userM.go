@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/schema"
 	"github.com/jmoiron/sqlx"
@@ -93,6 +94,10 @@ func (u *User) ParseSignupForm(r *http.Request, d *schema.Decoder) error {
 		return err
 	}
 	if err := d.Decode(u, r.PostForm); err != nil {
+		if strings.Contains(err.Error(), "schema: invalid path") {
+			fmt.Println(err)
+			return nil
+		}
 		return err
 	}
 	return nil
@@ -210,12 +215,37 @@ func (u *User) CreateUser(db *sqlx.DB) error {
 }
 
 //update user (need user details populated)
-func (u *User) updateUser(db *sqlx.DB) error {
+func (u *User) UpdateUser(db *sqlx.DB) error {
+	var query string
+
+	//TODO sanitize strings to prevent SQL injection
+
+	query = `UPDATE member SET
+		first_name = $2,
+		last_name = $3,
+		username = $4,
+		password = $5,
+		dob = $6,
+		phone = $7
+		WHERE id = $1;`
+
+	_, err := db.Exec(query,
+		u.ID,
+		u.FirstName,
+		u.LastName,
+		u.Email,
+		u.Password,
+		"1-1-1970",
+		u.Phone,
+	)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 //delete user (need user ID populated)
-func (u *User) deleteUser(db *sqlx.DB) error {
+func (u *User) DeleteUser(db *sqlx.DB) error {
 	return nil
 }
 

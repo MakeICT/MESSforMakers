@@ -5,10 +5,10 @@
 {{ define "content" }}
   <div class="row">
     <h4>Register for MakeICT</h4>
-    <form class="col s12" method="POST" action="/signup">
-      {{template "user_form" .}}
+    <form class="col s12" method="POST" action="/login">
+      {{template "login_form" .}}
       <div class="row">
-        <button class="btn waves-effect waves-light" type="submit" name="action">Submit
+        <button class="btn waves-effect waves-light" type="submit" name="action">Log In
           <i class="material-icons right">send</i>
         </button>
       </div>

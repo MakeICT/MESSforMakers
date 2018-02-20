@@ -34,7 +34,7 @@ func newApplication(config *Config) *application {
 	}
 	loggingMiddleware := loggingMiddleware{config.Logger.DumpRequest, logger}
 
-	//middlewware that should be called on every request get added to the chain here
+	//middleware that should be called on every request get added to the chain here
 	commonHandlers := alice.New(loggingMiddleware.loggingHandler)
 
 	//set up the database
@@ -69,21 +69,21 @@ func (a *application) appRouter(c alice.Chain) {
 
 	router := mux.NewRouter()
 
-	//declare all the controllers so they are more readable in the routes table
-	userC := controllers.User(a.DB)
+	//create the controllers so they are more readable in the routes table
+	userC := controllers.User(a.DB, a.cookieStore)
 	NIC := controllers.NotImplementedController()
 	staticC := controllers.StaticController()
 
 	//set all the routes here. Uses gorilla/mux so routes can use regex,
 	//and following with .Methods() allows for limiting them to only specific HTTP methods
+	// Routes that utilize the same controller and switch inside the controller on method type can use the same table entry.
 	router.HandleFunc("/", staticC.Root()).Methods("GET")
 	router.HandleFunc("/join", staticC.Join()).Methods("GET")
 	router.HandleFunc("/reserve", staticC.Reservations()).Methods("GET")
-	// Routes that utilize the same controller and switch inside the controller on method type can use the same table entry.
 	router.HandleFunc("/signup", userC.Create()).Methods("GET", "POST")
-	router.HandleFunc("/login", NIC.None("login page")).Methods("GET", "POST")
+	router.HandleFunc("/login", userC.Login()).Methods("GET", "POST")
 	router.HandleFunc("/user/{id:[0-9]+}", userC.Show()).Methods("GET")
-	router.HandleFunc("/user/{id:[0-9]+}/edit", NIC.None("form to edit user")).Methods("GET", "PATCH")
+	router.HandleFunc("/user/{id:[0-9]+}/edit", userC.Edit()).Methods("GET", "POST")
 	router.HandleFunc("/user/{id:[0-9]+}", NIC.None("delete user")).Methods("DELETE")
 	router.HandleFunc("/users", userC.Index()).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}/ice", NIC.None("update ice")).Methods("PATCH")

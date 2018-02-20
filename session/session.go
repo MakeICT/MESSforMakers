@@ -10,8 +10,8 @@ import (
 
 const (
 	letterIdxBits = 6
-	letterIdxMask = 1<<letterIdxBits - 1
-	letterIdxMax  = 63 / letterIdxBits
+	letterIdxMask = 1<<letterIdxBits - 1 //63
+	letterIdxMax  = 63 / letterIdxBits   //10
 	letterBytes   = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
