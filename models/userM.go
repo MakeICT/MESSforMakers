@@ -51,7 +51,13 @@ type UserErrors struct {
 	Guardian  string
 	Ice       string
 	Email     string
-	Password  string
+	Login     string
+}
+
+type Login struct {
+	Username string `schema:"username"`
+	Password string `schema:"password"`
+	Remember bool   `schema:"remember"`
 }
 
 //get one user (need user ID populated)
@@ -86,21 +92,6 @@ func GetAllUsers(db *sqlx.DB, count, offset int) ([]User, error) {
 		users = append(users, u)
 	}
 	return users, nil
-}
-
-// handles getting the form data out of the http.Request and into an easier format to work with.
-func (u *User) ParseSignupForm(r *http.Request, d *schema.Decoder) error {
-	if err := r.ParseForm(); err != nil {
-		return err
-	}
-	if err := d.Decode(u, r.PostForm); err != nil {
-		if strings.Contains(err.Error(), "schema: invalid path") {
-			fmt.Println(err)
-			return nil
-		}
-		return err
-	}
-	return nil
 }
 
 // Validate a user object, return a struct of strings with error messages if it fails.
@@ -167,6 +158,38 @@ func (u *User) ValidateUser() *UserErrors {
 
 	return nil
 }
+
+func ValidateLogin
+
+// handles getting the form data out of the http.Request and into an easier format to work with.
+func (u *User) ParseSignupForm(r *http.Request, d *schema.Decoder) error {
+	if err := r.ParseForm(); err != nil {
+		return err
+	}
+	if err := d.Decode(u, r.PostForm); err != nil {
+		if strings.Contains(err.Error(), "schema: invalid path") {
+			fmt.Println(err)
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
+func (l *Login) ParseLoginForm(r *http.Request, d *schema.Decoder) error {
+	if err := r.ParseForm(); err != nil {
+		return err
+	}
+	if err := d.Decode(u, r.PostForm); err != nil {
+		if strings.Contains(err.Error(), "schema: invalid path") {
+			fmt.Println(err)
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
 
 //create user (need user details populated)
 //TODO actually store the user in the database. Nil return implies success.

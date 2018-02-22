@@ -17,3 +17,9 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	return db, nil
 }
+
+func SessionLookup(db *sqlx.DB, id string, auth string) (User, error) {
+
+	return nil, nil
+
+}
