@@ -20,6 +20,6 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 func SessionLookup(db *sqlx.DB, id string, auth string) (User, error) {
 
-	return nil, nil
+	return User{}, nil
 
 }

@@ -1,6 +1,9 @@
 package models
 
 import (
+	"crypto/rand"
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -38,6 +41,7 @@ type User struct {
 	EmailCheck    string `schema:"emailcheck"`
 	Password      string `schema:"password" db:"password"`
 	PasswordCheck string `schema:"passwordcheck"`
+	Authorized    bool
 }
 
 //only needs strings, and no nested structs.  One message string can be used to describe any address or ICE issues
@@ -51,6 +55,7 @@ type UserErrors struct {
 	Guardian  string
 	Ice       string
 	Email     string
+	Password  string
 	Login     string
 }
 
@@ -59,6 +64,10 @@ type Login struct {
 	Password string `schema:"password"`
 	Remember bool   `schema:"remember"`
 }
+
+//Error constants for use in error checking for all packages that import this package.
+// TODO Fill out this list. review all error handling in app and controller
+var ErrNotAuthorized error = errors.New("Authorization Failed")
 
 //get one user (need user ID populated)
 func (u *User) GetUser(db *sqlx.DB) error {
@@ -96,6 +105,7 @@ func GetAllUsers(db *sqlx.DB, count, offset int) ([]User, error) {
 
 // Validate a user object, return a struct of strings with error messages if it fails.
 // Destructive function, modifies the user if there are irreconcilable errors with password or email.
+// TODO make validation more robust
 func (u *User) ValidateUser() *UserErrors {
 	ue := new(UserErrors)
 	errorsFound := false
@@ -159,14 +169,55 @@ func (u *User) ValidateUser() *UserErrors {
 	return nil
 }
 
-func ValidateLogin
+func generateKey(n int) (string, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+
+	// TODO add some error checking to ensure that the OS CSPRNG has not failed in any way
+
+	return base64.URLEncoding.EncodeToString(b), err
+}
+
+func (u *User) OriginateSession(db *sqlx.DB) (string, error) {
+	//generate crypto random key
+	key, err := generateKey(32)
+	if err != nil {
+		return "", err
+	}
+
+	//store key in database
+	query := "INSERT INTO session (userid, authtoken, loginDate, lastSeenDate) VALUES ($1, $2, $3, $4)"
+
+	// TODO make the fields datetime not date
+	_, err = db.Exec(query, u.ID, key, "1-1-1970", "1-1-1970")
+
+	if err != nil {
+		return "", err
+	}
+
+	//return key
+	return key, nil
+}
+
+// TODO ------------------------------------------
+
+func (l *Login) ValidateLogin() (*User, error) {
+
+	return nil, nil
+
+}
 
 // handles getting the form data out of the http.Request and into an easier format to work with.
+// TODO NO!!! WHYY!! why is there an http.Request in the MODEL!!!!! GET OUT!!!!
 func (u *User) ParseSignupForm(r *http.Request, d *schema.Decoder) error {
 	if err := r.ParseForm(); err != nil {
 		return err
 	}
 	if err := d.Decode(u, r.PostForm); err != nil {
+		// TODO this is bad, don't check string value, check imported error type.
 		if strings.Contains(err.Error(), "schema: invalid path") {
 			fmt.Println(err)
 			return nil
@@ -180,7 +231,7 @@ func (l *Login) ParseLoginForm(r *http.Request, d *schema.Decoder) error {
 	if err := r.ParseForm(); err != nil {
 		return err
 	}
-	if err := d.Decode(u, r.PostForm); err != nil {
+	if err := d.Decode(l, r.PostForm); err != nil {
 		if strings.Contains(err.Error(), "schema: invalid path") {
 			fmt.Println(err)
 			return nil
@@ -190,9 +241,7 @@ func (l *Login) ParseLoginForm(r *http.Request, d *schema.Decoder) error {
 	return nil
 }
 
-
-//create user (need user details populated)
-//TODO actually store the user in the database. Nil return implies success.
+//create user.  Expects a populated and validated user struct.
 func (u *User) CreateUser(db *sqlx.DB) error {
 
 	var query string
@@ -237,7 +286,7 @@ func (u *User) CreateUser(db *sqlx.DB) error {
 	return nil
 }
 
-//update user (need user details populated)
+//update user. Expects a populated and validated user struct.
 func (u *User) UpdateUser(db *sqlx.DB) error {
 	var query string
 

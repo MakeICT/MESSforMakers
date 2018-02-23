@@ -20,11 +20,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"net/http/httputil"
 	"strconv"
-	"time"
-
-	"github.com/makeict/MESSforMakers/util"
 )
 
 const appPort = "8080"

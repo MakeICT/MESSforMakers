@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
@@ -149,7 +151,7 @@ func (a *authenticationMiddleware) authenticationHandler(h http.Handler) http.Ha
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		//check if cookie exists
-		s, err := a.CookieStore.Get(r, "mess-data")
+		s, err := a.CookieStore.Store.Get(r, "mess-data")
 
 		if err == nil && !s.IsNew { //if the session is not new, then it can look for the user ID and auth key
 
@@ -166,6 +168,9 @@ func (a *authenticationMiddleware) authenticationHandler(h http.Handler) http.Ha
 					user.Authorized = true
 					// context key should be a custom type and a const NOT a string
 					ctx := context.WithValue(r.Context(), contextkeyUser, user)
+
+					// TODO if the user is authorized, the LastSeenTime of the session should be updated
+
 					h.ServeHTTP(w, r.WithContext(ctx))
 					return
 				} else if err == models.ErrNotAuthorized {

@@ -18,7 +18,7 @@
 package controllers
 
 import (
-	"fmt"
+	// "fmt"
 	"net/http"
 	"strconv"
 
@@ -44,9 +44,9 @@ type UserController struct {
 
 //Body struct to contain all the various fields that may be needed to render the templates.
 type Body struct {
-	User: *models.User
-	ErrorMessages: *models.UserErrors 
-	Login: *models.Login
+	User          *models.User
+	ErrorMessages *models.UserErrors
+	Login         *models.Login
 }
 
 // setup function that stores the database pool in the controller, or other things if necessary
@@ -76,7 +76,7 @@ func (c *UserController) Create() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Method == "GET" {
-			
+
 			// always need a body, even if it's empty. The template can check for empty fields, but not missing structs
 			body := Body{}
 
@@ -88,7 +88,7 @@ func (c *UserController) Create() func(w http.ResponseWriter, r *http.Request) {
 		} else if r.Method == "POST" {
 
 			//A user object can be passed around to contain and preserve partial form data that needs revision and error correction.
-			user := models.User{}
+			user := &models.User{}
 
 			//the model should not be handling things like errors and http. Send the model only the minimum necessary for parsing the form.
 			// TODO Refactor to get the http.Request out of the model
@@ -101,7 +101,7 @@ func (c *UserController) Create() func(w http.ResponseWriter, r *http.Request) {
 			// TODO the model should be returning better error messages, so that better decisions can be made based on WHY the validation failed.
 			if errMessages := user.ValidateUser(); errMessages != nil {
 				body := Body{
-					User:        user,
+					User:          user,
 					ErrorMessages: errMessages,
 				}
 				if err := views.User.New.Render(w, body); err != nil {
@@ -118,7 +118,7 @@ func (c *UserController) Create() func(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			
+
 			//if the user is created successfully, there is nothing to render here, and it should show the user their new profile page.
 			//use StatusSeeOther for redirect.
 			http.Redirect(w, r, "/user/"+strconv.Itoa(user.ID), http.StatusSeeOther)
@@ -126,11 +126,11 @@ func (c *UserController) Create() func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//Show a single user. 
+//Show a single user.
 func (c *UserController) Show() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		// the router will only call this function if there is a numeric ID number in the URL, 
+		// the router will only call this function if there is a numeric ID number in the URL,
 		// but it will need to be converted from a string to an int.
 		// TODO if it can't convert from string to int, it should do something nicer then 500
 		id_string := mux.Vars(r)["id"]
@@ -139,10 +139,10 @@ func (c *UserController) Show() func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		
+
 		//the model needs a user with a minimum of an ID to fetch the data to render the user's page
 		// TODO the model should return better errors, if the user is not found, the error should be 404 not 500
-		u := models.User{ID: id}
+		u := &models.User{ID: id}
 		if err := u.GetUser(c.DB); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -162,7 +162,7 @@ func (c *UserController) Edit() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Method == "GET" {
-			
+
 			//TODO this code is repeated exactly from the Show() method and twice here, and will be in any method that requires the user's ID from the URL. DRY it.
 			id_string := mux.Vars(r)["id"]
 			id, err := strconv.Atoi(id_string)
@@ -170,22 +170,22 @@ func (c *UserController) Edit() func(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			
+
 			// In order to pre-fill the form, the user has to be retrieved.
-			u := models.User{ID: id}
+			u := &models.User{ID: id}
 			if err := u.GetUser(c.DB); err != nil {
 				// TODO again, if the user can't be retrieved, handle the error better and more politely.
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			
+
 			body := Body{User: u}
 
 			if err := views.User.Edit.Render(w, body); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			
+
 		} else if r.Method == "POST" {
 
 			//A user object can be passed around to contain and preserve partial form data that needs revision and error correction.
@@ -195,9 +195,9 @@ func (c *UserController) Edit() func(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			
+
 			//the model should not be handling things like errors and http. Send the model only the minimum necessary for parsing the form.
-			user := models.User{ID: id}
+			user := &models.User{ID: id}
 			if err := user.ParseSignupForm(r, c.Decoder); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -206,7 +206,7 @@ func (c *UserController) Edit() func(w http.ResponseWriter, r *http.Request) {
 			//when the form has parsed, begin validating the data, and filling the form with whatever can be salvaged from an invalid submission.
 			if errMessages := user.ValidateUser(); errMessages != nil {
 				body := Body{
-					User:        user,
+					User:          user,
 					ErrorMessages: errMessages,
 				}
 				if err := views.User.Edit.Render(w, body); err != nil {
@@ -233,9 +233,9 @@ func (c *UserController) Edit() func(w http.ResponseWriter, r *http.Request) {
 //Displays the form allowing the user to log in, and handles the form data and login procedure when the form is submitted.
 func (c *UserController) Login() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		
+
 		var err error
-		
+
 		if r.Method == "GET" {
 
 			body := Body{}
@@ -246,41 +246,37 @@ func (c *UserController) Login() func(w http.ResponseWriter, r *http.Request) {
 			}
 
 		} else if r.Method == "POST" {
-			
-			//good example of a login flow
-			//https://groups.google.com/d/msg/golang-nuts/XrNCyDfZPX4/9kkeJygvuboJ
-			//https://gist.github.com/mschoebel/9398202
-			
-			login := *models.Login{}
-			
+
+			login := &models.Login{}
+
 			//get post data into login object
 			if err = login.ParseLoginForm(r, c.Decoder); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			
+
 			//validate password "hash" for username
-			user := *models.User{}
-			if user, err = models.ValidateLogin(login); err != nil {
-				
+			user := &models.User{}
+			if user, err = login.ValidateLogin(); err != nil {
+
 				//if the user comes back invalid for any reason, use the username from the submitted form, but nothing else
 				body := Body{
-					Login: *models.Login{
+					Login: &models.Login{
 						Username: login.Username,
 					},
-					ErrorMessages: *models.UserErrors{
+					ErrorMessages: &models.UserErrors{
 						Login: "Invalid username or password",
 					},
 				}
-				
+
 				if err = views.User.Login.Render(w, body); err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 			}
-			
+
 			//If everything comes back valid, set the cookie and start a session
-			if err = setLoginCookie(c.CookieStore, user); if err!= nil {
+			if err = setLoginCookie(w, r, c, user); err != nil {
 				//TODO failed to log in. Should indicate that somehow.
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -294,9 +290,26 @@ func (c *UserController) Login() func(w http.ResponseWriter, r *http.Request) {
 }
 
 // this should set start a session in the database by generating an auth token and storing it, then setting a cookie with that auth token and the user's ID
-func setLoginCookie(cs *session.CookieStore, u *models.User) error {
-	
-	//requires a few database helper functions like generating the auth token, storing the auth token.
-	
+func setLoginCookie(w http.ResponseWriter, r *http.Request, c *UserController, u *models.User) error {
+
+	// originate session
+	// method needs to generate an auth token, store the token in the DB with the user ID and return the token and an error
+	authToken, err := u.OriginateSession(c.DB)
+	if err != nil {
+		return err
+	}
+	//if there is no error,
+	session, err := c.CookieStore.Store.Get(r, "mess-data")
+	if err != nil {
+		return err
+	}
+
+	session.Values["userid"] = u.ID
+	session.Values["authtoken"] = authToken
+
+	if err = session.Save(r, w); err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -62,6 +62,9 @@ type CookieStore struct {
 
 // NewCookieStore makes a new cookie store. <- wins the
 // award of the year for the most boring comment ever.
+
+// TODO need to set cookie options for a reasonable expiration time, path, domain, httponly etc.
+
 func NewCookieStore(sessionName string) *CookieStore {
 	sks := newSessionKeys()
 	s := sessions.NewCookieStore(
