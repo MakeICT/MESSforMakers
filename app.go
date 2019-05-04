@@ -26,7 +26,7 @@ type application struct {
 func newApplication(config *Config) *application {
 
 	//Set up a logger middleware
-	logger, err := util.NewLogger()
+	logger, err := util.NewLogger("makeict.log", util.WARN)
 	if err != nil {
 		fmt.Printf("Error creating logger :: %v", err)
 		panic(1)
@@ -47,7 +47,7 @@ func newApplication(config *Config) *application {
 	))
 	if err != nil {
 		fmt.Printf("Error initializing database :: %v\n", err)
-		panic(1)
+		//panic(1)
 	}
 
 	// app needs to be created and have the DB initialized so that appRouter can pass the connection pool to the controllers

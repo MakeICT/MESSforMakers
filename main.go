@@ -28,7 +28,7 @@ import (
 	"html/template"
 )
 
-const appPort = "8080"
+const appPort = "3000"
 
 func main() {
 
@@ -42,11 +42,11 @@ func main() {
 	// create the app with user-defined settings
 	app := newApplication(config)
 
-	// make sure the logger releases it's resources if the server shuts down.
+	// make sure the logger releases its resources if the server shuts down.
 	defer app.logger.Close()
-
+	app.logger.Warn("this is a test warning")
 	app.logger.Println("Starting Application")
-	app.logger.Fatal(http.ListenAndServe(":"+appPort, app.Router))
+	app.logger.Fatal(http.ListenAndServe("localhost:"+appPort, app.Router))
 
 }
 
