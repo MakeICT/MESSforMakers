@@ -16,8 +16,11 @@ type Config struct {
 		SSL      bool   `json:"sslmode"`
 	} `json:"database_settings"`
 	Logger struct {
-		DumpRequest string `json:"dump_request"`
+		DumpRequest bool `json:"dump_request"`
 	} `json:"logger_settings"`
+	App struct {
+		Port int `json:"port"`
+	} `json:"app_settings"`
 }
 
 // InitConfig parse configuration file and setup settings
