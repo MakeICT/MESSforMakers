@@ -39,7 +39,7 @@ func newApplication(config *Config) *application {
 
 	//set up the database
 	db, err := models.InitDB(fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/%s",
+		"sslmode=disable user=%s password=%s host=%s port=%d dbname=%s",
 		config.Database.Username,
 		config.Database.Password,
 		config.Database.Host,

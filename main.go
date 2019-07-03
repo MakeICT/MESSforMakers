@@ -38,7 +38,7 @@ func main() {
 	app := newApplication(config)
 	defer app.logger.Close()
 
-	app.logger.Println("Starting Application")
+	app.logger.Println("Starting Application on :" + strconv.Itoa(app.port))
 	app.logger.Fatal(http.ListenAndServe(":"+strconv.Itoa(app.port), app.Router))
 
 }
