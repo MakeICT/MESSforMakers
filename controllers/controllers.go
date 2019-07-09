@@ -1,20 +1,5 @@
-/*
- MESS for Makers - An open source member and event management platform
-    Copyright (C) 2017  Sam Schurter
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+// Package controllers provides handlers that can be mapped to routes and defines interfaces that define
+// what is required by the handlers.
 package controllers
 
 import (
@@ -23,14 +8,15 @@ import (
 	"github.com/makeict/MESSforMakers/views"
 )
 
+// Controller is a generic type that allows methods to be defined across all controllers, since Controller is embedded in all controllers
 type Controller struct{}
 
-//this file for defining methods common to all controllers
-
+// NotImplementedController returns an empty controller struct, allowing a route builder to define routes before there is a corresponding handler.
 func NotImplementedController() Controller {
 	return Controller{}
 }
 
+// None returns a message indicating that the route does not exist yet, allowing routing tables to be built without needing all the handler code in place.
 func (c *Controller) None(route string) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -39,6 +25,5 @@ func (c *Controller) None(route string) func(w http.ResponseWriter, r *http.Requ
 		if err := views.ErrorPage.Index.Render(w, body); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-
 	}
 }

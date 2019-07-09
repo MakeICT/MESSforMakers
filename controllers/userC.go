@@ -1,20 +1,3 @@
-/*
- MESS for Makers - An open source member and event management platform
-    Copyright (C) 2017  Sam Schurter
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package controllers
 
 import (
@@ -26,21 +9,23 @@ import (
 	"github.com/makeict/MESSforMakers/views"
 )
 
-//separate files for each individual controller
-//a controller is a struct, with methods defined on the struct for each action
-
-// the struct defines what the controller needs to be able to pass into any given page it needs to render
+// UserController embeds the Controller type and stores the data required by User handler
 type UserController struct {
 	Controller
 	DB *sqlx.DB
 }
 
-// setup function that stores the database pool in the controller, or other things if necessary
-func User(db *sqlx.DB) UserController {
-	return UserController{DB: db}
+// UserApp defines an interface requiring the Application to provide the necessary data the User handlers will need
+type UserApp interface {
+	DB() *sqlx.DB
 }
 
-// a handler
+// User requires an app struct providing data that the User handlers will need, and stores that data in a UserController, which is returned
+func User(u UserApp) UserController {
+	return UserController{DB: u.DB()}
+}
+
+// Index renders a list of all registered users.
 func (c *UserController) Index() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 

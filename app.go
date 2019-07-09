@@ -9,28 +9,27 @@ import (
 	"github.com/justinas/alice"
 	_ "github.com/lib/pq"
 
-	"github.com/makeict/MESSforMakers/controllers"
 	"github.com/makeict/MESSforMakers/models"
 	"github.com/makeict/MESSforMakers/session"
 	"github.com/makeict/MESSforMakers/util"
+	"github.com/makeict/messformakers/controllers"
 )
 
 // database connection, cookie store, etc..
 type application struct {
 	cookieStore *session.CookieStore
 	logger      *util.Logger
-	DB          *sqlx.DB
+	db          *sqlx.DB
 	Router      http.Handler
 	port        int
 }
 
-func newApplication(config *Config) *application {
+func newApplication(config *Config) (*application, error) {
 
 	//Set up a logger middleware
 	logger, err := util.NewLogger()
 	if err != nil {
-		fmt.Printf("Error creating logger :: %v", err)
-		panic(1)
+		return nil, fmt.Errorf("Error creating logger :: %v", err)
 	}
 	loggingMiddleware := loggingMiddleware{config.Logger.DumpRequest, logger}
 
@@ -39,7 +38,8 @@ func newApplication(config *Config) *application {
 
 	//set up the database
 	db, err := models.InitDB(fmt.Sprintf(
-		"sslmode=disable user=%s password=%s host=%s port=%d dbname=%s",
+		"sslmode=%s user=%s password=%s host=%s port=%d dbname=%s",
+		config.Database.SSL,
 		config.Database.Username,
 		config.Database.Password,
 		config.Database.Host,
@@ -47,22 +47,25 @@ func newApplication(config *Config) *application {
 		config.Database.Database,
 	))
 	if err != nil {
-		fmt.Printf("Error initializing database :: %v", err)
-		panic(1)
+		return nil, fmt.Errorf("Error initializing database :: %v", err)
 	}
 
 	// app needs to be created and have the DB initialized so that appRouter can pass the connection pool to the controllers
 	app := application{
 		cookieStore: session.NewCookieStore("mess-data"),
 		logger:      logger,
-		DB:          db,
+		db:          db,
 		port:        config.App.Port,
 	}
 
 	//initialize all the routes
 	app.appRouter(commonHandlers)
 
-	return &app
+	return &app, nil
+}
+
+func (a *application) DB() *sqlx.DB {
+	return a.db
 }
 
 func (a *application) appRouter(c alice.Chain) {
@@ -70,7 +73,7 @@ func (a *application) appRouter(c alice.Chain) {
 	router := mux.NewRouter()
 
 	//declare all the controllers so they are more readable in the routes table
-	userC := controllers.User(a.DB)
+	userC := controllers.User(a)
 	NIC := controllers.NotImplementedController()
 
 	//set all the routes here. Uses gorilla/mux so routes can use regex,
