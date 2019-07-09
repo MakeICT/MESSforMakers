@@ -1,20 +1,3 @@
-/*
- MESS for Makers - An open source member and event management platform
-    Copyright (C) 2017  Sam Schurter
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package views
 
 import (
@@ -24,27 +7,50 @@ import (
 	"path/filepath"
 )
 
+// app will initialize the views and store each view in a sub struct.
+// a view will be a template and
+// app will have a method to addDefaultData to a viewer
+// the viewer interface will require the methods setCSRFtoken, setAuthenticateduser, setFlash
+// a controller then expects to have access to the app struct. Can call adddefaultdata and pass it a view
+
 //generic defaults pages for each controller
 type View struct {
-	Index Page
-	Show  Page
-	New   Page
-	Edit  Page
+	Templates *template.Template
+	Name      string
 }
 
-type Page struct {
-	Template *template.Template
-	Layout   string
+type ViewData struct {
+	//template data that applies to all pages on the site (CSRF tokens, logged in username, etc)
+	CSRFToken         string
+	AuthenticatedUser string
+	Flash             string
 }
 
-func (self *Page) Render(w http.ResponseWriter, data interface{}) error {
+type Viewer interface {
+	SetCSRFToken(string)
+	SetAuthenticatedUser(string)
+	SetFlash(string)
+}
+
+func (v *View) Render(w http.ResponseWriter, r *http.Request, layout string, td interface{}) error {
 	return self.Template.ExecuteTemplate(w, self.Layout, data)
 }
 
-func LayoutFiles() []string {
-	files, err := filepath.Glob("templates/layouts/*.gohtml")
+func (v *View) LoadTemplates() {
+	//load sitewide templates and fragments
+	//load view-specific templates and fragments
+	sitefiles, err := filepath.Glob("templates/layouts/*.gohtml")
 	if err != nil {
 		log.Panic(err)
 	}
+
+	viewfiles, err := filepath.Glob(fmt.Sprintf("templates/%s/*.gohtml", v.Name))
+	if err != nil {
+		log.Panic(err)
+	}
+	files := append(sitefiles, viewfiles...)
+
+	v.Templates = template.Must(template.New("index").ParseFiles(files...))
+
 	return files
 }
