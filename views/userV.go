@@ -17,35 +17,21 @@
 */
 package views
 
-import (
-	"html/template"
-	"log"
-	"path/filepath"
-)
-
 type UserView struct {
 	View
 	//add custom pages for a controller here
+	ViewData UserViewData
 }
 
 var User UserView
 
-func UserFiles() []string {
-	files, err := filepath.Glob("templates/user/includes/*.gohtml")
-	if err != nil {
-		log.Panic(err)
-	}
-	files = append(files, LayoutFiles()...)
-	return files
+func (uv *UserView) AddViewData(d UserViewData) {
+	uv.ViewData = d
 }
 
 func init() {
-	indexFiles := append(UserFiles(), "templates/user/index.gohtml")
-	User.Index = Page{
-		Template: template.Must(template.New("index").ParseFiles(indexFiles...)),
-		Layout:   "index",
-	}
+	User.Name = "user"
 
-	//parse other needed templates here, for each page
+	User.LoadTemplates()
 
 }
