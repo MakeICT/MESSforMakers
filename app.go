@@ -9,10 +9,11 @@ import (
 	"github.com/justinas/alice"
 	_ "github.com/lib/pq"
 
+	"github.com/makeict/MESSforMakers/controllers"
 	"github.com/makeict/MESSforMakers/models"
 	"github.com/makeict/MESSforMakers/session"
 	"github.com/makeict/MESSforMakers/util"
-	"github.com/makeict/messformakers/controllers"
+	"github.com/makeict/MESSforMakers/views"
 )
 
 // database connection, cookie store, etc..
@@ -22,6 +23,7 @@ type application struct {
 	db          *sqlx.DB
 	Router      http.Handler
 	port        int
+	UserView    *views.View
 }
 
 func newApplication(config *Config) (*application, error) {
@@ -31,10 +33,8 @@ func newApplication(config *Config) (*application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error creating logger :: %v", err)
 	}
-	loggingMiddleware := loggingMiddleware{config.Logger.DumpRequest, logger}
 
-	//middlewware that should be called on every request get added to the chain here
-	commonHandlers := alice.New(loggingMiddleware.loggingHandler)
+	app := application{logger: logger}
 
 	//set up the database
 	db, err := models.InitDB(fmt.Sprintf(
@@ -50,16 +50,14 @@ func newApplication(config *Config) (*application, error) {
 		return nil, fmt.Errorf("Error initializing database :: %v", err)
 	}
 
-	// app needs to be created and have the DB initialized so that appRouter can pass the connection pool to the controllers
-	app := application{
-		cookieStore: session.NewCookieStore("mess-data"),
-		logger:      logger,
-		db:          db,
-		port:        config.App.Port,
-	}
+	app.cookieStore = session.NewCookieStore("mess-data")
+	app.db = db
+	app.port = config.App.Port
+
+	app.UserView = views.New("user")
 
 	//initialize all the routes
-	app.appRouter(commonHandlers)
+	app.appRouter()
 
 	return &app, nil
 }
@@ -68,7 +66,23 @@ func (a *application) DB() *sqlx.DB {
 	return a.db
 }
 
-func (a *application) appRouter(c alice.Chain) {
+func (a *application) AddDefaultDataFunc() func(td *views.TemplateData) {
+	return func(td *views.TemplateData) *views.TemplateData {
+		if td == nil {
+			td = *views.TemplateData{}
+		}
+		td.AuthenticatedUser = "lasdjkf"
+		td.Flash = "flash"
+		return td
+	}
+}
+
+func (a *application) appRouter() {
+
+	loggingMiddleware := loggingMiddleware{a.logger}
+
+	//middleware that should be called on every request get added to the chain here
+	c := alice.New(loggingMiddleware.loggingHandler)
 
 	router := mux.NewRouter()
 

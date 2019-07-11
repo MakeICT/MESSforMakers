@@ -19,21 +19,22 @@ type View struct {
 	Name      string
 }
 
-type ViewData struct {
-	//template data that applies to all pages on the site (CSRF tokens, logged in username, etc)
+type TemplateData struct {
 	CSRFToken         string
 	AuthenticatedUser string
 	Flash             string
+	ViewData          interface{}
 }
 
-type Viewer interface {
-	SetCSRFToken(string)
-	SetAuthenticatedUser(string)
-	SetFlash(string)
+func New(n string) View {
+	v := View{Name: n}
+
+	v.LoadTemplates()
+	return v
 }
 
-func (v *View) Render(w http.ResponseWriter, r *http.Request, layout string, td interface{}) error {
-	return self.Template.ExecuteTemplate(w, self.Layout, data)
+func (v *View) Render(w http.ResponseWriter, r *http.Request, layout string, td TemplateData) error {
+	return self.Template.ExecuteTemplate(w, layout, td)
 }
 
 func (v *View) LoadTemplates() {

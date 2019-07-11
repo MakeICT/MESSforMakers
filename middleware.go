@@ -10,15 +10,14 @@ import (
 
 //Middleware
 type loggingMiddleware struct {
-	dumpRequest bool
-	logger      *util.Logger
+	logger *util.Logger
 }
 
 func (l *loggingMiddleware) loggingHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t1 := time.Now()
 
-		if l.dumpRequest {
+		if l.logger.DumpRequest {
 			if reqDump, err := httputil.DumpRequest(r, true); err == nil {
 				l.logger.Printf("Recieved Request:\n%s\n", reqDump)
 			}

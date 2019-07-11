@@ -9,7 +9,9 @@ import (
 )
 
 // Controller is a generic type that allows methods to be defined across all controllers, since Controller is embedded in all controllers
-type Controller struct{}
+type Controller struct {
+	AddDefaultData func()
+}
 
 // NotImplementedController returns an empty controller struct, allowing a route builder to define routes before there is a corresponding handler.
 func NotImplementedController() Controller {
