@@ -24,6 +24,7 @@ type application struct {
 	Router      http.Handler
 	port        int
 	UserView    *views.View
+	ErrorView   *views.View
 }
 
 func newApplication(config *Config) (*application, error) {
@@ -55,6 +56,7 @@ func newApplication(config *Config) (*application, error) {
 	app.port = config.App.Port
 
 	app.UserView = views.New("user")
+	app.ErrorView = views.New("error")
 
 	//initialize all the routes
 	app.appRouter()

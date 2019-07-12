@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -34,7 +35,7 @@ func New(n string) View {
 }
 
 func (v *View) Render(w http.ResponseWriter, r *http.Request, layout string, td TemplateData) error {
-	return self.Template.ExecuteTemplate(w, layout, td)
+	return v.Templates.ExecuteTemplate(w, layout, td)
 }
 
 func (v *View) LoadTemplates() {
@@ -53,5 +54,4 @@ func (v *View) LoadTemplates() {
 
 	v.Templates = template.Must(template.New("index").ParseFiles(files...))
 
-	return files
 }

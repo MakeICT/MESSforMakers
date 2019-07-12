@@ -12,7 +12,8 @@ import (
 // UserController embeds the Controller type and stores the data required by User handler
 type UserController struct {
 	Controller
-	DB *sqlx.DB
+	DB       *sqlx.DB
+	UserView *views.View
 }
 
 // UserApp defines an interface requiring the Application to provide the necessary data the User handlers will need
@@ -23,10 +24,10 @@ type UserApp interface {
 
 // User requires an app struct providing data that the User handlers will need, and stores that data in a UserController, which is returned
 func User(u UserApp) UserController {
-	return UserController{
-		DB:             u.DB(),
-		AddDefaultData: u.AddDefaultData(),
-	}
+	uc := UserController{}
+	uc.DB = u.DB()
+	uc.AddDefaultData = u.AddDefaultData()
+	return uc
 }
 
 // Index renders a list of all registered users.
