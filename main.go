@@ -24,14 +24,9 @@ func main() {
 	if err != nil {
 		fmt.Printf("Could not start the application: %v", err)
 	}
-	defer app.logger.Close()
+	defer app.Logger.Close()
 
-	app.logger.Println("Starting Application on :" + strconv.Itoa(app.port))
-	app.logger.Fatal(http.ListenAndServe(":"+strconv.Itoa(app.port), app.Router))
+	app.Logger.Println("Starting Application on :" + strconv.Itoa(app.port))
+	app.Logger.Fatal(http.ListenAndServe(":"+strconv.Itoa(app.port), app.Router))
 
-}
-
-// RootHandler is obsolete, will all be handled in controllers.
-func RootHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "you got the root handler")
 }

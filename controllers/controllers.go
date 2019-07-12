@@ -3,29 +3,32 @@
 package controllers
 
 import (
-	"net/http"
-
+	"github.com/makeict/MESSforMakers/session"
+	"github.com/makeict/MESSforMakers/util"
 	"github.com/makeict/MESSforMakers/views"
+
+	"github.com/jmoiron/sqlx"
 )
 
-// Controller is a generic type that allows methods to be defined across all controllers, since Controller is embedded in all controllers
+// Struct to store pointer to cookiestore, database, and logger
+
 type Controller struct {
-	AddDefaultData func(*views.TemplateData) *views.TemplateData
+	CookieStore *session.CookieStore
+	DB          *sqlx.DB
+	Logger      *util.Logger
 }
 
-// NotImplementedController returns an empty controller struct, allowing a route builder to define routes before there is a corresponding handler.
-func NotImplementedController() Controller {
-	return Controller{}
+// method to create a new struct and store the information from the app, passed as args
+// Requiring the information passed as args avoids imports loop
+// the general controller constructor will be called by the specific controller constructors
+// the specific controller constructors can then initialize and embed their own templates.
+func (c *Controller) Initialize(cs *session.CookieStore, db *sqlx.DB, l *util.Logger) {
+	c.CookieStore = cs
+	c.DB = db
+	c.Logger = l
 }
 
-// None returns a message indicating that the route does not exist yet, allowing routing tables to be built without needing all the handler code in place.
-func (c *Controller) None(route string) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		body := "This route has not been implemented yet: " + route
-
-		if err := views.ErrorPage.Index.Render(w, body); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	}
+// method to generate required default template data and return template object
+func (c *Controller) AddDefaultData(td *views.TemplateData) *views.TemplateData {
+	return *views.TemplateData{}
 }
