@@ -1,0 +1,84 @@
+{{define "index"}}
+    <!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+	<link rel="stylesheet" href="static/css/materialize.css">
+	<link rel="stylesheet" href="static/css/style.css">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>MakeICT Administration | Page Title</title>
+</head>
+<body>
+	<header>
+		<nav class="grey">
+		    <div class="nav-wrapper ">
+		      	<a href="#!" class="brand-logo">Page Title</a>
+		      	<a href="#" data-activates="mobile-nav" class="button-collapse"><i class="material-icons">menu</i></a>
+		      	<ul class="right hide-on-med-and-down valign-wrapper">
+		        	<li><a href="">Dropdown 1</a></li>
+		        	<li><a href="">Dropdown 2</a></li>
+		        	<li><a href="">Dropdown 3</a></li>
+		        	<li><a href="" class="valign-wrapper">User Name <img src="static/images/sample-1s.jpg" class="circle responsive-img"></a></li>
+		      	</ul>
+		      	<ul class="side-nav" id="mobile-nav">
+		        	<li class="logo"><a>Logo Here</a></li>
+		        	<li class="logo"><a>Username Here</a></li>
+		        	<li class="no-padding">
+		        		<ul class="collapsible collapsible-accordion">
+		        			<li class="bold"><a class="collapsible-header">Collapsible Header 1</a>
+		        				<div class="collapsible-body">
+		        					<ul>
+		        						<li><a>item 1</a></li>
+		        						<li><a>item 2</a></li>
+		        						<li><a>item 3</a></li>
+		        					</ul>
+		        				</div>
+		        			</li>
+		        			<li class="bold active"><a class="collapsible-header active">Collapsible Header 2</a>
+		        				<div class="collapsible-body">
+		        					<ul>
+		        						<li><a>item 1</a></li>
+		        						<li class="active"><a>item 2</a></li>
+		        						<li><a>item 3</a></li>
+		        					</ul>
+		        				</div>
+		        			</li>
+		        			<li class="bold"><a class="collapsible-header">Collapsible Header 3</a>
+		        				<div class="collapsible-body">
+		        					<ul>
+		        						<li><a>item 1</a></li>
+		        						<li><a>item 2</a></li>
+		        						<li><a>item 3</a></li>
+		        					</ul>
+		        				</div>
+		        			</li>
+		        		</ul>
+		        	</li>
+		      	</ul>
+		    </div>
+	  	</nav>
+	</header>
+
+	<main>
+		<div class="container">
+			<div class="col s12 m2 l1">
+				<p class="flow-text">main content</p>
+				<p>{{.}}</p>
+			</div>
+		</div>		
+	</main>
+
+	<footer class="page-footer grey">
+		<div class="container">
+			footer content - links, copyright, policies, etc
+		</div>
+	</footer>
+
+	<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+	<script type="text/javascript" src="static/js/materialize.js"></script>
+	<script type="text/javascript" src="static/js/style.js"></script>
+
+</body>
+</html>
+{{end}}

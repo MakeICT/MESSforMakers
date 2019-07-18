@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 
@@ -21,5 +22,10 @@ type TemplateData struct {
 }
 
 func (v *View) Render(w http.ResponseWriter, r *http.Request, layout string, td *TemplateData) error {
-	return v.TemplateCache.Execute(w, td)
+
+	for _, t := range v.TemplateCache.Templates() {
+		fmt.Println(t.Name())
+	}
+
+	return v.TemplateCache.ExecuteTemplate(w, layout, td)
 }

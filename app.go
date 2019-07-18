@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/makeict/MESSforMakers/controllers"
+
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/justinas/alice"
@@ -75,9 +77,15 @@ func (a *application) appRouter() {
 
 	router := mux.NewRouter()
 
+	userC := controllers.UserController{}
+	userC.Initialize(a.CookieStore, a.DB, a.Logger)
+
+	staticC := controllers.StaticController{}
+	staticC.Initialize(a.CookieStore, a.DB, a.Logger)
+
 	//set all the routes here. Uses gorilla/mux so routes can use regex,
 	//and following with .Methods() allows for limiting them to only specific HTTP methods
-	router.HandleFunc("/", noRoute("root"))
+	router.HandleFunc("/", staticC.Root())
 	router.HandleFunc("/signup", noRoute("signup")).Methods("GET")
 	router.HandleFunc("/login", noRoute("login")).Methods("GET")
 	router.HandleFunc("/login", noRoute("login processor")).Methods("POST")

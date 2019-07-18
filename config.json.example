@@ -9,5 +9,8 @@
 	},
 	"logger_settings": {
 		"dump_request":""
+	},
+	"app_settings": {
+		"port":
 	}
 }
