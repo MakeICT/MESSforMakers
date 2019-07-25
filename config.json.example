@@ -3,14 +3,14 @@
 		"username":"",
 		"password":"",
 		"host":"",
-		"port":"",
+		"port":5432,
 		"database":"",
-		"sslmode":""
+		"sslmode":"disable"
 	},
 	"logger_settings": {
-		"dump_request":""
+		"dump_request":false
 	},
 	"app_settings": {
-		"port":
+		"port":8080
 	}
 }
