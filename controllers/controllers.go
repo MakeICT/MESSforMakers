@@ -46,6 +46,6 @@ func loadTemplates(ff []string) (*template.Template, error) {
 		}
 		files = append(files, fg...)
 	}
-	fmt.Println(files)
+	//fmt.Println(files)
 	return template.ParseFiles(files...)
 }

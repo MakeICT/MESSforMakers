@@ -78,8 +78,10 @@ func (a *application) appRouter() {
 
 	router := mux.NewRouter()
 
-	fs := http.FileServer(neuteredFileSystem{http.Dir("./assets")})
-	fmt.Printf("fs: %#v", fs)
+	fs := http.StripPrefix("/assets/", http.FileServer(noListFileSystem{http.Dir("./assets")}))
+	// Ending the URL path with no trailing slash looks like it should be a route to a resource, but it's not. Return 404.
+	// Anything that does have the trailing slash may be a real request for an asset. Handle with the custom filesystem
+	router.PathPrefix("/assets/").Handler(fs)
 
 	userC := controllers.UserController{}
 	userC.Initialize(a.CookieStore, a.DB, a.Logger)
@@ -106,11 +108,6 @@ func (a *application) appRouter() {
 	router.HandleFunc("/user/{id:[0-9]+}/waiver", noRoute("show waiver")).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}/waiver", noRoute("delete waiver")).Methods("DELETE")
 
-	// Ending the URL path with no trailing slash looks like it should be a route to a resource, but it's not. Return 404.
-	router.Handle("/assets", http.NotFoundHandler())
-	// Anything that does have the trailing slash may be a real request for an asset. Handle with the custom filesystem
-	router.Handle("/assets/", http.StripPrefix("/assets", fs))
-
 	//TODO: need to implement handlers for 404 and 405, then implement router.NotFoundHandler and router.MethodNotAllowedHandler
 
 	//set the app router. Alice will pass all the requests through the middleware chain first,
@@ -118,25 +115,22 @@ func (a *application) appRouter() {
 	a.Router = c.Then(router)
 }
 
-type neuteredFileSystem struct {
+type noListFileSystem struct {
 	fs http.FileSystem
 }
 
-func (nfs neuteredFileSystem) Open(path string) (http.File, error) {
-
-	fmt.Printf("Trying to open: %s", path)
-
+func (nfs noListFileSystem) Open(path string) (http.File, error) {
 	f, err := nfs.fs.Open(path)
 	if err != nil {
 		return nil, err
 	}
 
 	s, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
 	if s.IsDir() {
-		fmt.Printf("%s is a directory, trying to open index.html", path)
-		index := strings.TrimSuffix(path, "/") + "/index.html"
-		if _, err := nfs.fs.Open(index); err != nil {
-			fmt.Printf("Could not open index.html, returning err")
+		if _, err := nfs.fs.Open(strings.TrimSuffix(path, "/") + "/index.html"); err != nil {
 			return nil, err
 		}
 	}
