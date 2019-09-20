@@ -1,7 +1,11 @@
 package models
 
+import (
+	"github.com/jmoiron/sqlx"
+)
+
 type UserModel struct {
-	Model
+	DB *sqlx.DB
 }
 
 type User struct {
@@ -11,12 +15,12 @@ type User struct {
 }
 
 //get one user (need user ID populated)
-func (um *UserModel) GetUser(int) (*User, error) {
+func (um *UserModel) Get(int) (*User, error) {
 	return nil, nil
 }
 
 //get "count" many users, starting "offset" users from the beginning
-func (um *UserModel) GetAllUsers(count, offset int) ([]User, error) {
+func (um *UserModel) GetAll(count, offset int) ([]User, error) {
 	if err := um.DB.Ping(); err != nil {
 		return nil, err
 	}
@@ -38,17 +42,17 @@ func (um *UserModel) GetAllUsers(count, offset int) ([]User, error) {
 }
 
 //create user (need user details populated)
-func (um *UserModel) CreateUser(*User) error {
+func (um *UserModel) Create(*User) error {
 	return nil
 }
 
 //update user (need user details populated)
-func (um *UserModel) UpdateUser(*User) error {
+func (um *UserModel) Update(*User) error {
 	return nil
 }
 
 //delete user (need user ID populated)
-func (um *UserModel) DeleteUser(*User) error {
+func (um *UserModel) Delete(*User) error {
 	return nil
 }
 

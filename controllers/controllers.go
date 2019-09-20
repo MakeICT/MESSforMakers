@@ -5,8 +5,7 @@ package controllers
 import (
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
-
+	"github.com/makeict/MESSforMakers/models"
 	"github.com/makeict/MESSforMakers/session"
 	"github.com/makeict/MESSforMakers/util"
 	"github.com/makeict/MESSforMakers/views"
@@ -14,9 +13,17 @@ import (
 
 // Struct to store pointer to cookiestore, database, and logger
 
+type Users interface {
+	Get(int) (*models.User, error)
+	GetAll(int, int) ([]models.User, error)
+	Create(*models.User) error
+	Update(*models.User) error
+	Delete(*models.User) error
+}
+
 type Controller struct {
 	CookieStore *session.CookieStore
-	DB          *sqlx.DB
+	Users       Users
 	Logger      *util.Logger
 	AppConfig   *util.Config
 }
@@ -25,15 +32,15 @@ type Controller struct {
 // Requiring the information passed as args avoids imports loop
 // the general controller constructor will be called by the specific controller constructors
 // the specific controller constructors can then initialize and embed their own templates.
-func (c *Controller) setup(cfg *util.Config, cs *session.CookieStore, db *sqlx.DB, l *util.Logger) {
+func (c *Controller) setup(cfg *util.Config, cs *session.CookieStore, um Users, l *util.Logger) {
 	c.CookieStore = cs
-	c.DB = db
+	c.Users = um
 	c.Logger = l
 	c.AppConfig = cfg
 }
 
 // method to generate required default template data and return template object
-func (c *Controller) AddDefaultData(td *views.TemplateData) *views.TemplateData {
+func (c *Controller) AddDefaultData(td *views.TemplateData) error {
 	td.Root = fmt.Sprintf("http://%s:%d/", c.AppConfig.App.Host, c.AppConfig.App.Port)
-	return td
+	return nil
 }
