@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/makeict/MESSforMakers/util"
 )
 
 //Main reads the configuration immediately and dies if it can't be read.
@@ -12,7 +14,7 @@ import (
 func main() {
 	//Read the configuration and die if it can't be read.
 	//This does NOT guarantee that sensible options have been set, only that the file can be read.
-	config, err := InitConfig("config.json")
+	config, err := util.InitConfig("config.json")
 	if err != nil {
 		//No log files have been set up yet, so just dump the error to stdout
 		fmt.Print("Cannot parse the configuration file")

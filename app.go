@@ -24,9 +24,10 @@ type application struct {
 	DB          *sqlx.DB
 	Router      http.Handler
 	port        int
+	Config      *util.Config
 }
 
-func newApplication(config *Config) (*application, error) {
+func newApplication(config *util.Config) (*application, error) {
 
 	//Set up a logger middleware
 	logger, err := util.NewLogger(config.Logger.DumpRequest)
@@ -34,7 +35,7 @@ func newApplication(config *Config) (*application, error) {
 		return nil, fmt.Errorf("Error creating logger :: %v", err)
 	}
 
-	app := application{Logger: logger}
+	app := application{Logger: logger, Config: config}
 
 	//set up the database
 	db, err := models.InitDB(fmt.Sprintf(
@@ -71,10 +72,8 @@ func noRoute(msg string) func(w http.ResponseWriter, r *http.Request) {
 
 func (a *application) appRouter() {
 
-	loggingMiddleware := loggingMiddleware{a.Logger}
-
 	//middleware that should be called on every request get added to the chain here
-	c := alice.New(loggingMiddleware.loggingHandler)
+	c := alice.New(a.recoverPanic, a.loggingHandler)
 
 	router := mux.NewRouter()
 
@@ -84,10 +83,14 @@ func (a *application) appRouter() {
 	router.PathPrefix("/assets/").Handler(fs)
 
 	userC := controllers.UserController{}
-	userC.Initialize(a.CookieStore, a.DB, a.Logger)
+	if err := userC.Initialize(a.Config, a.CookieStore, a.DB, a.Logger); err != nil {
+		a.Logger.Fatalf("Failed to initialize user controller: %v", err)
+	}
 
 	staticC := controllers.StaticController{}
-	staticC.Initialize(a.CookieStore, a.DB, a.Logger)
+	if err := staticC.Initialize(a.Config, a.CookieStore, a.DB, a.Logger); err != nil {
+		a.Logger.Fatalf("Failed to initialize controller for static routes: %v", err)
+	}
 
 	//set all the routes here. Uses gorilla/mux so routes can use regex,
 	//and following with .Methods() allows for limiting them to only specific HTTP methods

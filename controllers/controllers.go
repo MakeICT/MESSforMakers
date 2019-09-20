@@ -4,8 +4,6 @@ package controllers
 
 import (
 	"fmt"
-	"html/template"
-	"path/filepath"
 
 	"github.com/jmoiron/sqlx"
 
@@ -20,32 +18,22 @@ type Controller struct {
 	CookieStore *session.CookieStore
 	DB          *sqlx.DB
 	Logger      *util.Logger
+	AppConfig   *util.Config
 }
 
 // method to create a new struct and store the information from the app, passed as args
 // Requiring the information passed as args avoids imports loop
 // the general controller constructor will be called by the specific controller constructors
 // the specific controller constructors can then initialize and embed their own templates.
-func (c *Controller) setup(cs *session.CookieStore, db *sqlx.DB, l *util.Logger) {
+func (c *Controller) setup(cfg *util.Config, cs *session.CookieStore, db *sqlx.DB, l *util.Logger) {
 	c.CookieStore = cs
 	c.DB = db
 	c.Logger = l
+	c.AppConfig = cfg
 }
 
 // method to generate required default template data and return template object
 func (c *Controller) AddDefaultData(td *views.TemplateData) *views.TemplateData {
-	return &views.TemplateData{}
-}
-
-func loadTemplates(ff []string) (*template.Template, error) {
-	var files []string
-	for _, f := range ff {
-		fg, err := filepath.Glob(fmt.Sprintf("templates/%s/*.gohtml", f))
-		if err != nil {
-			return nil, fmt.Errorf("could not find template files: %v", err)
-		}
-		files = append(files, fg...)
-	}
-	//fmt.Println(files)
-	return template.ParseFiles(files...)
+	td.Root = fmt.Sprintf("http://%s:%d/", c.AppConfig.App.Host, c.AppConfig.App.Port)
+	return td
 }

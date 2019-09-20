@@ -11,6 +11,7 @@
 		"dump_request":false
 	},
 	"app_settings": {
-		"port":8080
+		"port":8080,
+		"host":"localhost"
 	}
 }

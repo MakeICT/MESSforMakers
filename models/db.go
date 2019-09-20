@@ -4,6 +4,10 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type Model struct {
+	DB *sqlx.DB
+}
+
 //initialize db
 func InitDB(dataSourceName string) (*sqlx.DB, error) {
 

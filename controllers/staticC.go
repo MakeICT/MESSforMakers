@@ -16,20 +16,20 @@ type StaticController struct {
 	StaticView views.View
 }
 
-func (sc *StaticController) Initialize(cs *session.CookieStore, db *sqlx.DB, l *util.Logger) error {
-	sc.setup(cs, db, l)
+func (sc *StaticController) Initialize(cfg *util.Config, cs *session.CookieStore, db *sqlx.DB, l *util.Logger) error {
+	sc.setup(cfg, cs, db, l)
+	sc.StaticView = views.View{}
 
-	tc, err := loadTemplates([]string{"error", "static"})
-	if err != nil {
+	if err := sc.StaticView.LoadTemplates([]string{"error", "static"}); err != nil {
 		return fmt.Errorf("Error loading static templates: %v", err)
 	}
 
-	sc.StaticView = views.View{TemplateCache: tc}
 	return nil
 }
 
 func (sc *StaticController) Root() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		sc.StaticView.Render(w, r, "index", &views.TemplateData{})
+		td := sc.AddDefaultData(&views.TemplateData{})
+		sc.StaticView.Render(w, r, "index", td)
 	})
 }
