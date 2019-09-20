@@ -27,12 +27,15 @@ func (sc *StaticController) Initialize(cfg *util.Config, cs *session.CookieStore
 
 func (sc *StaticController) Root() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
 		td := &views.TemplateData{}
+
 		if err := sc.AddDefaultData(td); err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 
 		sc.StaticView.Render(w, r, "index", td)
+
 	})
 }

@@ -30,21 +30,27 @@ func (a *application) appRouter() {
 	router.HandleFunc("/user", noRoute("save new user to db")).Methods("POST")
 	router.HandleFunc("/user/{id:[0-9]+}", noRoute("show specific user")).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}/edit", noRoute("form to edit user")).Methods("GET")
-	router.HandleFunc("/user/{id:[0-9]+}", noRoute("save user update to db")).Methods("PATCH")
-	router.HandleFunc("/user/{id:[0-9]+}", noRoute("delete user")).Methods("DELETE")
+	router.HandleFunc("/user/{id:[0-9]+}", noRoute("save user update to db")).Methods("POST").MatcherFunc(makeMatcher("patch"))
+	router.HandleFunc("/user/{id:[0-9]+}", noRoute("delete user")).Methods("POST").MatcherFunc(makeMatcher("delete"))
 	router.HandleFunc("/users", noRoute("users")).Methods("GET")
-	router.HandleFunc("/user/{id:[0-9]+}/ice", noRoute("update ice")).Methods("PATCH")
-	router.HandleFunc("/user/{id:[0-9]+}/ice", noRoute("delete ice")).Methods("DELETE")
+	router.HandleFunc("/user/{id:[0-9]+}/ice", noRoute("update ice")).Methods("POST").MatcherFunc(makeMatcher("patch"))
+	router.HandleFunc("/user/{id:[0-9]+}/ice", noRoute("delete ice")).Methods("POST").MatcherFunc(makeMatcher("delete"))
 	router.HandleFunc("/user/{id:[0-9]+}/uploadwaiver", noRoute("uploadwaiver")).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}/uploadwaiver", noRoute("save waiver")).Methods("POST")
 	router.HandleFunc("/user/{id:[0-9]+}/waiver", noRoute("show waiver")).Methods("GET")
-	router.HandleFunc("/user/{id:[0-9]+}/waiver", noRoute("delete waiver")).Methods("DELETE")
+	router.HandleFunc("/user/{id:[0-9]+}/waiver", noRoute("delete waiver")).Methods("POST").MatcherFunc(makeMatcher("delete"))
 
 	//TODO: need to implement handlers for 404 and 405, then implement router.NotFoundHandler and router.MethodNotAllowedHandler
 
 	//set the app router. Alice will pass all the requests through the middleware chain first,
 	//then to the functions defined above
 	a.Router = c.Then(router)
+}
+
+func makeMatcher(m string) func(*http.Request, *mux.RouteMatch) bool {
+	return func(r *http.Request, rm *mux.RouteMatch) bool {
+		return r.FormValue("_method") == m
+	}
 }
 
 //return a generic error for routes that are in the table but controllers are not ready
