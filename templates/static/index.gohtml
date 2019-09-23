@@ -63,8 +63,28 @@
 	<main>
 		<div class="container">
 			<div class="col s12 m2 l1">
-				<p class="flow-text">main content</p>
-				<p>{{.}}</p>
+				<p class="flow-text">authuser</p>
+				<p>{{.AuthUser}}</p>
+			</div>
+			<div class="col s12 m2 l1">
+				<p class="flow-text">csrf</p>
+				<p>{{.CSRFToken}}</p>
+			</div>
+			<div class="col s12 m2 l1">
+				<p class="flow-text">flash message</p>
+				<p>{{.Flash}}</p>
+			</div>
+			<div class="col s12 m2 l1">
+				<p class="flow-text">Page title</p>
+				<p>{{.PageTitle}}</p>
+			</div>
+			<div class="col s12 m2 l1">
+				<p class="flow-text">app root</p>
+				<p>{{.Root}}</p>
+			</div>
+			<div class="col s12 m2 l1">
+				<p class="flow-text">mapped data</p>
+				<p>{{.Data.Mapped}}</p>
 			</div>
 		</div>		
 	</main>

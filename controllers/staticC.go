@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/makeict/MESSforMakers/models"
+
 	"github.com/makeict/MESSforMakers/session"
 	"github.com/makeict/MESSforMakers/util"
 	"github.com/makeict/MESSforMakers/views"
@@ -34,6 +36,18 @@ func (sc *StaticController) Root() func(http.ResponseWriter, *http.Request) {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
+
+		td.AuthUser = &models.User{
+			Name: "user name",
+		}
+
+		td.CSRFToken = "csrftoken"
+
+		td.Flash = "flash message"
+
+		td.PageTitle = "Title here"
+
+		td.Add("Mapped", "data in map")
 
 		sc.StaticView.Render(w, r, "index", td)
 

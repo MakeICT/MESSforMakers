@@ -1,6 +1,7 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -49,7 +50,7 @@ func NewLogger(logfile string, dr bool, level int) (*Logger, error) {
 
 	err = logger.SetLevel(level)
 
-	return logger, err
+	return &logger, err
 }
 
 func (l *Logger) Close() {

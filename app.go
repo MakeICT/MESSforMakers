@@ -29,7 +29,7 @@ type application struct {
 func newApplication(config *util.Config) (*application, error) {
 
 	//Set up a logger middleware
-	logger, err := util.NewLogger(config.Logger.DumpRequest)
+	logger, err := util.NewLogger("makeict.log", config.Logger.DumpRequest, util.DEBUG) //KNOWN BUG, first arg is ignored
 	if err != nil {
 		return nil, fmt.Errorf("Error creating logger :: %v", err)
 	}
