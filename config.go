@@ -13,7 +13,7 @@ type Config struct {
 		Database string `json:"database"`
 		Host     string `json:"host"`
 		Port     int    `json:"port"`
-		SSL      bool   `json:"sslmode"`
+		SSL      string `json:"sslmode"`
 	} `json:"database_settings"`
 	Logger struct {
 		DumpRequest bool `json:"dump_request"`
