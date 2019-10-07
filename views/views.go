@@ -10,12 +10,12 @@ import (
 	"github.com/makeict/MESSforMakers/models"
 )
 
-// a view is a struct holding a template cache with a render method defined on it.
+// View is a struct holding a template cache with a render method defined on it.
 type View struct {
-	TemplateCache *template.Template
+	TemplateCache map[string]*template.Template
 }
 
-// A templatedata is a holder for all the default data, and an interface for the rest
+// TemplateData is a holder for all the default data, and an interface for the rest
 type TemplateData struct {
 	AuthUser  *models.User
 	CSRFToken string
@@ -25,28 +25,62 @@ type TemplateData struct {
 	Data      map[string]interface{}
 }
 
-func (v *View) Render(w http.ResponseWriter, r *http.Request, layout string, td *TemplateData) error {
-
-	return v.TemplateCache.ExecuteTemplate(w, layout, td)
+// Render writes the template and data to the provided writer
+func (v *View) Render(w http.ResponseWriter, r *http.Request, page string, td *TemplateData) error {
+	t := v.TemplateCache[page]
+	return t.ExecuteTemplate(w, page, td)
 
 }
 
-func (v *View) LoadTemplates(ff []string) error {
-	var files []string
-	for _, f := range ff {
-		fg, err := filepath.Glob(fmt.Sprintf("templates/%s/*.gohtml", f))
-		if err != nil {
-			return fmt.Errorf("could not find template files: %v", err)
-		}
-		files = append(files, fg...)
-	}
-	//fmt.Println(files)
-	tc, err := template.ParseFiles(files...)
+// LoadTemplates takes a string of folders and loads the templates into the view
+func (v *View) LoadTemplates(f string) error {
+
+	//get list of pages from view folder
+	//for each page in view folder
+	//attach all from layouts
+	//attach all from */includes
+	//create template and store in
+
+	tc := map[string]*template.Template{}
+
+	pages, err := filepath.Glob(fmt.Sprintf("templates/%s/*.gohtml", f))
 	if err != nil {
-		return err
+		return fmt.Errorf("could not find view page templates: %v", err)
 	}
+
+	for _, p := range pages {
+		n := filepath.Base(p)
+
+		t, err := template.New(n).ParseFiles(p)
+		if err != nil {
+			return fmt.Errorf("could not create template from page: %v", err)
+		}
+
+		lf, err := filepath.Glob("templates/layouts/*.gohtml")
+		if err != nil {
+			return fmt.Errorf("could not find layout templates: %v", err)
+		}
+		t, err = t.ParseFiles(lf...)
+		if err != nil {
+			return fmt.Errorf("could not create layout templates: %v", err)
+		}
+
+		includef, err := filepath.Glob(fmt.Sprintf("templates/%s/include/*.gohtml", f))
+		if err != nil {
+			return fmt.Errorf("could not find view include templates: %v", err)
+		}
+		t, err = t.ParseFiles(includef...)
+		if err != nil {
+			return fmt.Errorf("could not create include templates: %v", err)
+		}
+
+		tc[n] = t
+	}
+
 	v.TemplateCache = tc
+
 	return nil
+
 }
 
 //AddMap is useful for controllers when there are many values to be added to the DataStore
