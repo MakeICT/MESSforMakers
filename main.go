@@ -25,27 +25,20 @@ func main() {
 	//TODO newApplication should return an error if the configuration is invalid
 	app, err := newApplication(config)
 	if err != nil {
-		fmt.Printf("Could not start the application: %v", err)
+		fmt.Printf("Could not create the application: %v", err)
 	}
-	defer app.logger.Close()
-
-	addr := ":" + strconv.Itoa(app.port)
+	defer app.Logger.Close()
 
 	srv := &http.Server{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
-		Addr:         addr,
-		ErrorLog:     app.logger.Logger,
+		Addr:         fmt.Sprintf("%s:%d", config.App.Host, config.App.Port),
+		ErrorLog:     app.Logger.Logger,
 		Handler:      app.Router,
 	}
 
-	app.logger.Println("Starting Application on :" + strconv.Itoa(app.port))
-	app.logger.Fatal(srv.ListenAndServe)
+	app.Logger.Println("Starting Application on :" + strconv.Itoa(app.port))
+	app.Logger.Fatal(srv.ListenAndServe())
 
-}
-
-// RootHandler is obsolete, will all be handled in controllers.
-func RootHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "you got the root handler")
 }

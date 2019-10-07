@@ -4,24 +4,15 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"time"
-
-	"github.com/makeict/MESSforMakers/util"
 )
 
-//Middleware
-type loggingMiddleware struct {
-	dumpRequest bool
-	logger      *util.Logger
-}
-
-//TODO
-func (l *loggingMiddleware) loggingHandler(h http.Handler) http.Handler {
+func (a *application) loggingHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t1 := time.Now()
 
-		if l.dumpRequest {
+		if a.Logger.DumpRequest {
 			if reqDump, err := httputil.DumpRequest(r, true); err == nil {
-				l.logger.Printf("Recieved Request:\n%s\n", reqDump)
+				a.Logger.Printf("Recieved Request:\n%s\n", reqDump)
 			}
 		}
 
@@ -29,6 +20,21 @@ func (l *loggingMiddleware) loggingHandler(h http.Handler) http.Handler {
 
 		t2 := time.Now()
 
-		l.logger.Printf("[%s] %s %v\n", r.Method, r.URL.String(), t2.Sub(t1))
+		a.Logger.Printf("[%s] %s %v\n", r.Method, r.URL.String(), t2.Sub(t1))
+	})
+}
+
+func (a *application) recoverPanic(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		defer func() {
+			if err := recover(); err != nil {
+				a.Logger.Printf("Panic recovered: %v", err)
+				w.Header().Set("Connection", "close")
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+		}()
+
+		h.ServeHTTP(w, r)
 	})
 }

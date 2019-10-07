@@ -3,27 +3,44 @@
 package controllers
 
 import (
-	"net/http"
+	"fmt"
 
+	"github.com/makeict/MESSforMakers/models"
+	"github.com/makeict/MESSforMakers/session"
+	"github.com/makeict/MESSforMakers/util"
 	"github.com/makeict/MESSforMakers/views"
 )
 
-// Controller is a generic type that allows methods to be defined across all controllers, since Controller is embedded in all controllers
-type Controller struct{}
+// Struct to store pointer to cookiestore, database, and logger
 
-// NotImplementedController returns an empty controller struct, allowing a route builder to define routes before there is a corresponding handler.
-func NotImplementedController() Controller {
-	return Controller{}
+type Users interface {
+	Get(int) (*models.User, error)
+	GetAll(int, int) ([]models.User, error)
+	Create(*models.User) error
+	Update(*models.User) error
+	Delete(*models.User) error
 }
 
-// None returns a message indicating that the route does not exist yet, allowing routing tables to be built without needing all the handler code in place.
-func (c *Controller) None(route string) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+type Controller struct {
+	CookieStore *session.CookieStore
+	Users       Users
+	Logger      *util.Logger
+	AppConfig   *util.Config
+}
 
-		body := "This route has not been implemented yet: " + route
+// method to create a new struct and store the information from the app, passed as args
+// Requiring the information passed as args avoids imports loop
+// the general controller constructor will be called by the specific controller constructors
+// the specific controller constructors can then initialize and embed their own templates.
+func (c *Controller) setup(cfg *util.Config, cs *session.CookieStore, um Users, l *util.Logger) {
+	c.CookieStore = cs
+	c.Users = um
+	c.Logger = l
+	c.AppConfig = cfg
+}
 
-		if err := views.ErrorPage.Index.Render(w, body); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	}
+// method to generate required default template data and return template object
+func (c *Controller) AddDefaultData(td *views.TemplateData) error {
+	td.Root = fmt.Sprintf("http://%s:%d/", c.AppConfig.App.Host, c.AppConfig.App.Port)
+	return nil
 }
