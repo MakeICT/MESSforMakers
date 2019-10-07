@@ -24,7 +24,7 @@ type application struct {
 	port        int
 }
 
-func newApplication(config *Config) (*application, error) {
+func newApplication(config *util.Config) (*application, error) {
 
 	//Set up a logger middleware
 	logger, err := util.NewLogger()

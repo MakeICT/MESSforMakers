@@ -14,6 +14,7 @@ type loggingMiddleware struct {
 	logger      *util.Logger
 }
 
+//TODO
 func (l *loggingMiddleware) loggingHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t1 := time.Now()

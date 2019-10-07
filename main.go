@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/makeict/MESSforMakers/util"
 )
 
 //Main reads the configuration immediately and dies if it can't be read.
@@ -12,7 +15,7 @@ import (
 func main() {
 	//Read the configuration and die if it can't be read.
 	//This does NOT guarantee that sensible options have been set, only that the file can be read.
-	config, err := InitConfig("config.json")
+	config, err := util.InitConfig("config.json")
 	if err != nil {
 		//No log files have been set up yet, so just dump the error to stdout
 		fmt.Print("Cannot parse the configuration file")
@@ -26,8 +29,19 @@ func main() {
 	}
 	defer app.logger.Close()
 
+	addr := ":" + strconv.Itoa(app.port)
+
+	srv := &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
+		Addr:         addr,
+		ErrorLog:     app.logger.Logger,
+		Handler:      app.Router,
+	}
+
 	app.logger.Println("Starting Application on :" + strconv.Itoa(app.port))
-	app.logger.Fatal(http.ListenAndServe(":"+strconv.Itoa(app.port), app.Router))
+	app.logger.Fatal(srv.ListenAndServe)
 
 }
 
