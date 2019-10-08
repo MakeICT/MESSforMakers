@@ -5,7 +5,7 @@
 {{end}}
 
 {{define "view_footer"}}
-<script type="text/javascript" src="/assets/js/util.js"></script>
+<script type="text/javascript" src="assets/js/util.js"></script>
 {{end}}
 
 {{define "signup_form"}}
@@ -14,72 +14,43 @@
     <div class="card">
     
         <div class="card-content">
+
+        name
+        email
+        password
+
+        dob
+        phone
+        Address 1
+        address 2
+        city
+        state
+        zip
+
+        Emergency Contact 1
+        Emergency Contact 2
+
+        membership type (guest, member ($25))
+
                     
             <div class="row">
                 <input placeholder="Name" type="text"  id="name" name="name" class="text-input">
             </div>
-            
-            <div class="row">				
-                <textarea id="description" name="description" class="materialize-textarea"></textarea>
-                <label for="description">Description</label>
+
+            <div class="row">
+                <div class="col s12 m6"><input placeholder="Email" type="text"  id="email" name="email" class="text-input"></div>
+                <div class="col s12 m6"><input placeholder="Confirm Email" type="text"  id="email2" name="email2" class="text-input"></div>
             </div>
+            
+            <div class="row">
+                <div class="col s12 m6"><input placeholder="password" type="password"  id="password" name="password" class="text-input"></div>
+                <div class="col s12 m6"><input placeholder="Confirm password" type="password"  id="password2" name="password2" class="text-input"></div>
+            </div>
+        
             
             <h6>Output</h6>
             
-            <div class="row valign-wrapper">
-                <div class="col s1">
-                    &nbsp;            
-                </div>
-                <div class="col l1 m2 s3">          
-                    <label>
-                        <input type="checkbox" id="file" name="file" onchange="toggle('file','path')" />
-                        <span>File</span>
-                    </label>
-                </div>
-                <div class="col s9">
-                    <input placeholder="Path" type="text"  id="path" name="path" class="text-input">
-                </div> 
-                <div class="col s12">
-                    <label>
-                    <input type="checkbox" id="overwrite" name="overwrite" />
-                <span>Overwrite Reports</span>
-                </label>
-            </div>
-            </div>
             
-            <div class="row valign-wrapper">
-                <div class="col s1">
-                    &nbsp;            
-                </div>
-                <div class="col l1 m2 s3">
-                    <label>
-                    <input type="checkbox" id="email" name="email" onchange="toggle('email','emails')" />
-                    <span>Email</span>
-                    </label>
-                </div>
-                <div class="col s9">
-                    <input placeholder="Address(es)" type="text"  id="emails" name="emails" class="text-input">
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="input-field col s12">
-                    <textarea id="query" name="query" class="materialize-textarea"></textarea>
-                    <label for="query">Query String</label>
-                </div>
-            </div>
-                    
-            <div class="row">
-                <div class="col s3">
-                    <input placeholder="Interval" type="tel"  id="interval" name="interval" class="text-input" >
-                </div>
-                <div class="col s3">
-                    <label>
-                    <input type="checkbox" id="auto" name="auto" />
-                    <span>Auto Report</span>
-                    </label>
-                </div>
-            </div>
             
             <div class="row">
                 <div class="col s6">
