@@ -25,9 +25,9 @@ func (a *application) appRouter() {
 	//and following with .Methods() allows for limiting them to only specific HTTP methods
 	router.HandleFunc("/", a.StaticC.Root())
 	router.HandleFunc("/signup", a.UserC.SignupForm()).Methods("GET")
+	router.HandleFunc("/signup", a.UserC.NewUser()).Methods("POST")
 	router.HandleFunc("/login", a.UserC.LoginForm()).Methods("GET")
 	router.HandleFunc("/login", a.UserC.LoginUser()).Methods("POST")
-	router.HandleFunc("/user", a.UserC.NewUser()).Methods("POST")
 	router.HandleFunc("/logout", a.UserC.Logout()).Methods("POST")
 	router.HandleFunc("/user/{id:[0-9]+}", noRoute("show specific user")).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}/edit", noRoute("form to edit user")).Methods("GET")

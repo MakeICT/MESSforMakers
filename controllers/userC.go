@@ -3,6 +3,9 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"time"
+
+	"github.com/makeict/MESSforMakers/models"
 
 	"github.com/makeict/MESSforMakers/session"
 	"github.com/makeict/MESSforMakers/util"
@@ -31,7 +34,12 @@ func (uc *UserController) Initialize(cfg *util.Config, cs *session.CookieStore, 
 //SignupForm displays the signup form
 func (uc *UserController) SignupForm() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "signup form not implemented yet", http.StatusInternalServerError)
+		td, err := uc.DefaultData()
+		if err != nil {
+			http.Error(w, "could not generate default data", http.StatusInternalServerError)
+			return
+		}
+		uc.UserView.Render(w, r, "signup.gohtml", td)
 		return
 	})
 }
@@ -39,7 +47,34 @@ func (uc *UserController) SignupForm() func(http.ResponseWriter, *http.Request) 
 //NewUser saves a new user to the database
 func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "new user not implemented yet", http.StatusInternalServerError)
+
+		dob, err := time.Parse("MM-DD-YYYY", r.FormValue("dob"))
+		if err != nil {
+			uc.Logger.Debugf("Could not parse DOB (%s), setting to NOW: %s", r.FormValue("dob"), time.Now())
+			dob = time.Now()
+		}
+
+		u := &models.User{
+			Name:     r.FormValue("name"),
+			Email:    r.FormValue("email"),
+			Password: r.FormValue("password"),
+			DOB:      dob,
+			Phone:    r.FormValue("phone"),
+			TextOK:   r.FormValue("oktotext") == "on",
+		}
+
+		err = uc.Users.Create(u)
+		if err != nil {
+			td, err := uc.DefaultData()
+			if err != nil {
+				http.Error(w, "could not generate default data", http.StatusInternalServerError)
+				return
+			}
+			td.Add("User", u)
+			uc.UserView.Render(w, r, "signup.gohtml", td)
+			return
+		}
+		http.Redirect(w, r, fmt.Sprintf("%s:%d", uc.AppConfig.App.Host, uc.AppConfig.App.Port), http.StatusSeeOther)
 		return
 	})
 }
