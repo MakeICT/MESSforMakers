@@ -34,7 +34,6 @@ func (uc *UserController) Initialize(cfg *util.Config, cs *session.CookieStore, 
 //SignupForm displays the signup form
 func (uc *UserController) SignupForm() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-<<<<<<< HEAD
 		td, err := uc.DefaultData()
 		if err != nil {
 			http.Error(w, "could not generate default data", http.StatusInternalServerError)
@@ -42,17 +41,6 @@ func (uc *UserController) SignupForm() func(http.ResponseWriter, *http.Request) 
 		}
 		uc.UserView.Render(w, r, "signup.gohtml", td)
 		return
-=======
-
-		td, err := uc.DefaultData()
-		if err != nil {
-			http.Error(w, "Could not generate default data", http.StatusInternalServerError)
-			return
-		}
-
-		uc.UserView.Render(w, r, "signup.gohtml", td)
-
->>>>>>> e75276c1e8f8fb845994b2b9487a2de665bf54b2
 	})
 }
 
