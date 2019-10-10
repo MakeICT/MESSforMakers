@@ -107,6 +107,19 @@ CREATE TABLE member (
 );
 COMMENT ON TABLE member IS 'Core table of all members and guests';
 
+CREATE TABLE member_address (
+	id SERIAL PRIMARY KEY
+	, member_id INTEGER NOT NULL REFERENCES member(id) ON DELETE CASCADE
+	, addr_type TEXT NOT NULL --home or billing
+	, addr1 TEXT NOT NULL
+	, addr2 TEXT
+	, city TEXT NOT NULL
+	, state TEXT NOT NULL
+	, zip TEXT NOT NULL
+	, UNIQUE(member_id, addr_type)
+);
+COMMENT ON TABLE member_address IS 'Home and billing addresses for members and guests'
+
 CREATE TABLE member_access_token (
       id SERIAL PRIMARY KEY
 	, member_id INTEGER NOT NULL REFERENCES member(id) ON DELETE CASCADE
