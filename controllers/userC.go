@@ -48,6 +48,31 @@ func (uc *UserController) SignupForm() func(http.ResponseWriter, *http.Request) 
 func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+		r.ParseForm()
+		form := util.NewForm(r.PostForm)
+
+		form.Required("name", "email", "email2", "password", "password2", "dob", "phone")
+		form.MatchField("email", "email2")
+		form.MatchField("password", "password2")
+		form.MinLength("password", 4)
+		form.MaxLength("name", 255)
+		form.MaxLength("email", 255)
+		form.MatchPattern("email", util.EmailRegEx)
+
+		if !form.Valid() {
+			//TODO add flash message that there were errors
+			td, err := uc.DefaultData()
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+			td.Add("form", form)
+			uc.UserView.Render(w, r, "signup.gohtml", td)
+			return
+		}
+
+		//TODO add gorilla/schema to scan a form directly into a struct
+		//TODO replace datepicker with mm dd yyyy boxes
+
 		dob, err := time.Parse("MM-DD-YYYY", r.FormValue("dob"))
 		if err != nil {
 			uc.Logger.Debugf("Could not parse DOB (%s), setting to NOW: %s", r.FormValue("dob"), time.Now())
