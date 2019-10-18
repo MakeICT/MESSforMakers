@@ -9,22 +9,25 @@
 {{end}}
 
 {{define "signup_form"}}
+{{if .Data.Form}}
+    {{.Data.Form}}
+{{end}}
 <form action="/signup" method="POST">
-
+{{with .Data.Form}}
     <div class="card">
     
         <div class="card-content">
                     
             <div class="row">
-                <input placeholder="Name" type="text"  id="name" name="name" class="text-input">
+                <input placeholder="Name" type="text"  id="name" name="name" class="text-input" value="{{.Get "name"}}">
             </div>
 
             <div class="row">
                 <div class="col s12 m6">
-                    <input placeholder="Email" type="text"  id="email" name="email" class="text-input">
+                    <input placeholder="Email" type="text"  id="email" name="email" class="text-input" value="{{.Get "email"}}">
                 </div>
                 <div class="col s12 m6">
-                    <input placeholder="Confirm Email" type="text"  id="email2" name="email2" class="text-input">
+                    <input placeholder="Confirm Email" type="text"  id="email2" name="email2" class="text-input" value="{{.Get "email2"}}">
                 </div>
             </div>
 
@@ -38,19 +41,27 @@
             </div>
 
             <div class="row">
-                <div class="col s12 input-field">
-                    <input type="text" class="datepicker" id="dob" name ="dob">
-                    <label for="dob">Date of Birth</label>
+                <div class="col s2 input-field">
+                    <input type="text" class="text-input" id="dob.mm" name ="dob.mm" value="{{.Get "dob.mm"}}">
+                    <label for="dob.mm">MM</label>
+                </div>
+                <div class="col s2 input-field">
+                    <input type="text" class="text-input" id="dob.dd" name ="dob.dd"value="{{.Get "dob.dd"}}">
+                    <label for="dob.dd">DD</label>
+                </div>
+                <div class="col s4 input-field">
+                    <input type="text" class="text-input" id="dob.yyyy" name ="dob.yyyy" value="{{.Get "dob.yyyy"}}">
+                    <label for="dob.yyyy">YYYY</label>
                 </div>
             </div>
 
             <div class="row">
                 <div class="col s12 m6">
-                    <input placeholder="Phone" type="text"  id="phone" name="phone" class="text-input">
+                    <input placeholder="Phone" type="text"  id="phone" name="phone" class="text-input" value="{{.Get "phone"}}">
                 </div>
                 <div class="col s12 m6">
                     <label>
-                        <input type="checkbox" id="oktotext" name="oktotext" />
+                        <input type="checkbox" id="oktotext" name="oktotext" {{if eq (.Get "oktotext") "on"}}checked{{end}} />
                         <span>Ok to text?</span>
                     </label>
                 </div>
@@ -59,42 +70,43 @@
             <div class="row">
                 <div class="col s12 m6">
                     <label>
-                        <input type="checkbox" id="membersignup" name="membersignup" />
+                        <input type="checkbox" id="membersignup" name="membersignup" {{if eq (.Get "membersignup") "on"}}checked{{end}} />
                         <span>Signup for MakeICT Membership?</span>
                     </label>
                 </div>
             </div>
             
             <div class="row">
+                {{$opt := .Get "membershipoption"}}
                 <div class="col s12 m6">
                     <label>
-                    <input name="membershipoption" type="radio" value="1" />
+                    <input name="membershipoption" type="radio" value="1" {{if eq $opt "1"}}checked{{end}} />
                     <span>1 month</span>
                     </label>
                     <br>
                     <label>
-                    <input name="membershipoption" type="radio" value="2" />
+                    <input name="membershipoption" type="radio" value="2" {{if eq $opt "2"}}checked{{end}} />
                     <span>6 months</span>
                     </label>
                     <br>
                     <label>
-                    <input name="membershipoption" type="radio" value="3" />
+                    <input name="membershipoption" type="radio" value="3" {{if eq $opt "3"}}checked{{end}} />
                     <span>12 months</span>
                     </label>
                 </div>
                 <div class="col s12 m6">
                     <label>
-                    <input name="membershipoption" type="radio" value="4" />
+                    <input name="membershipoption" type="radio" value="4" {{if eq $opt "4"}}checked{{end}} />
                     <span>1 month - Recurring</span>
                     </label>
                     <br>
                     <label>
-                    <input name="membershipoption" type="radio" value="5" />
+                    <input name="membershipoption" type="radio" value="5" {{if eq $opt "5"}}checked{{end}} />
                     <span>6 months - Recurring</span>
                     </label>
                     <br>
                     <label>
-                    <input name="membershipoption" type="radio" value="6" />
+                    <input name="membershipoption" type="radio" value="6" {{if eq $opt "6"}}checked{{end}} />
                     <span>12 months - Recurring</span>
                     </label>
                 </div>
@@ -107,6 +119,6 @@
         </div>
       				
 	</div>
-    
+{{end}}    
 </form>
-{{end}}}
+{{end}}

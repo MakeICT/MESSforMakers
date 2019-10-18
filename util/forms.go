@@ -11,6 +11,9 @@ import (
 // EmailRegEx is a convenience provided for validating email addresses. Recommended by the W3C.
 var EmailRegEx = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
+// PhoneRegEx is a convenience provided for validating phone numbers
+var PhoneRegEx = regexp.MustCompile(`^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$`)
+
 type formErrors map[string][]string
 
 func (e formErrors) Add(f, m string) {
@@ -22,7 +25,11 @@ func (e formErrors) Get(f string) string {
 	if len(es) == 0 {
 		return ""
 	}
-	return es[0]
+	retString := ""
+	for _, v := range es {
+		retString = fmt.Sprintf("%s; %s", retString, v)
+	}
+	return retString
 }
 
 // Form will hold the form values to be validated and any Errors generated.
@@ -44,6 +51,17 @@ func NewForm(data url.Values) *Form {
 // An error will be added for each field that is blank
 func (f *Form) Required(fields ...string) {
 	for _, field := range fields {
+		value := f.Get(field)
+		if strings.TrimSpace(value) == "" {
+			f.Errors.Add(field, "This field cannot be blank")
+		}
+	}
+}
+
+// RequiredIf takes a field and a flag. if the flag is true, then the field is required and an error will be added if it's blank.
+// Useful for fields that only require information if a specific option is checked.
+func (f *Form) RequiredIf(field string, apply bool) {
+	if apply {
 		value := f.Get(field)
 		if strings.TrimSpace(value) == "" {
 			f.Errors.Add(field, "This field cannot be blank")

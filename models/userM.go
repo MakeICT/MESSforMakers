@@ -55,7 +55,7 @@ func (um *UserModel) GetAll(count, offset int) ([]User, error) {
 }
 
 //Create user (need user details populated)
-func (um *UserModel) Create(*User) error {
+func (um *UserModel) Create(u *User, mo int) error {
 	return fmt.Errorf("not set up to save user")
 }
 

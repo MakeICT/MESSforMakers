@@ -3,10 +3,10 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/makeict/MESSforMakers/models"
-
 	"github.com/makeict/MESSforMakers/session"
 	"github.com/makeict/MESSforMakers/util"
 	"github.com/makeict/MESSforMakers/views"
@@ -39,6 +39,7 @@ func (uc *UserController) SignupForm() func(http.ResponseWriter, *http.Request) 
 			http.Error(w, "could not generate default data", http.StatusInternalServerError)
 			return
 		}
+		td.Add("Form", util.NewForm(nil))
 		uc.UserView.Render(w, r, "signup.gohtml", td)
 		return
 	})
@@ -51,13 +52,17 @@ func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 		r.ParseForm()
 		form := util.NewForm(r.PostForm)
 
-		form.Required("name", "email", "email2", "password", "password2", "dob", "phone")
+		form.Required("name", "email", "email2", "password", "password2", "dob.mm", "dob.dd", "dob.yyyy", "phone")
+		form.RequiredIf("membershipoption", r.FormValue("membersignup") == "on")
+		form.PermittedValues("membershipoption", "1", "2", "3", "4", "5", "6")
 		form.MatchField("email", "email2")
 		form.MatchField("password", "password2")
 		form.MinLength("password", 4)
 		form.MaxLength("name", 255)
 		form.MaxLength("email", 255)
+		form.MaxLength("phone", 15)
 		form.MatchPattern("email", util.EmailRegEx)
+		form.MatchPattern("phone", util.PhoneRegEx)
 
 		if !form.Valid() {
 			//TODO add flash message that there were errors
@@ -65,7 +70,12 @@ func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 			if err != nil {
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
-			td.Add("form", form)
+
+			//To minimize the number of times the plaintext password is passed back and forth, remove it before responding
+			form.Values["password"] = []string{}
+			form.Values["password2"] = []string{}
+
+			td.Add("Form", form)
 			uc.UserView.Render(w, r, "signup.gohtml", td)
 			return
 		}
@@ -73,10 +83,15 @@ func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 		//TODO add gorilla/schema to scan a form directly into a struct
 		//TODO replace datepicker with mm dd yyyy boxes
 
-		dob, err := time.Parse("MM-DD-YYYY", r.FormValue("dob"))
+		dob, err := time.Parse("MM-DD-YYYY", fmt.Sprintf("%s-%s-%s", r.FormValue("dob.mm"), r.FormValue("dob.dd"), r.FormValue("dob.yyyy")))
 		if err != nil {
-			uc.Logger.Debugf("Could not parse DOB (%s), setting to NOW: %s", r.FormValue("dob"), time.Now())
-			dob = time.Now()
+			form.Errors.Add("dob.mm", "Could not recognize date")
+		}
+
+		mo := 0
+		if r.FormValue("membersignup") == "on" {
+			//The error from Atoi is ignored because the value has already been confirmed to be the string 1, 2, 3, 4, 5, or 6
+			mo, _ = strconv.Atoi(r.FormValue("membershipoption"))
 		}
 
 		u := &models.User{
@@ -88,7 +103,7 @@ func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 			TextOK:   r.FormValue("oktotext") == "on",
 		}
 
-		err = uc.Users.Create(u)
+		err = uc.Users.Create(u, mo)
 		if err != nil {
 			td, err := uc.DefaultData()
 			if err != nil {

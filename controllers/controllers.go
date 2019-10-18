@@ -15,7 +15,7 @@ import (
 type Users interface {
 	Get(int) (*models.User, error)
 	GetAll(int, int) ([]models.User, error)
-	Create(*models.User) error
+	Create(*models.User, int) error
 	Update(*models.User) error
 	Delete(*models.User) error
 }
