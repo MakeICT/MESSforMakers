@@ -11,28 +11,31 @@ import (
 	"github.com/makeict/MESSforMakers/views"
 )
 
+//StaticController implements the handlers required for basic navigation pages
 type StaticController struct {
 	Controller
 	StaticView views.View
 }
 
+//Initialize performs the required setup for a static controller
 func (sc *StaticController) Initialize(cfg *util.Config, cs *session.CookieStore, um Users, l *util.Logger) error {
 	sc.setup(cfg, cs, um, l)
 	sc.StaticView = views.View{}
 
-	if err := sc.StaticView.LoadTemplates([]string{"error", "static"}); err != nil {
+	if err := sc.StaticView.LoadTemplates("static"); err != nil {
 		return fmt.Errorf("Error loading static templates: %v", err)
 	}
 
 	return nil
 }
 
+// Root displays the home page
 func (sc *StaticController) Root() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		td := &views.TemplateData{}
+		td, err := sc.DefaultData()
 
-		if err := sc.AddDefaultData(td); err != nil {
+		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -49,7 +52,7 @@ func (sc *StaticController) Root() func(http.ResponseWriter, *http.Request) {
 
 		td.Add("Mapped", "data in map")
 
-		sc.StaticView.Render(w, r, "index", td)
+		sc.StaticView.Render(w, r, "index.gohtml", td)
 
 	})
 }

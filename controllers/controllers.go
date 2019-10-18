@@ -11,16 +11,16 @@ import (
 	"github.com/makeict/MESSforMakers/views"
 )
 
-// Struct to store pointer to cookiestore, database, and logger
-
+// Users interface defines the methods that a Users model must fulfill. Allows mocking with a fake database for testing.
 type Users interface {
 	Get(int) (*models.User, error)
 	GetAll(int, int) ([]models.User, error)
-	Create(*models.User) error
+	Create(*models.User, int) error
 	Update(*models.User) error
 	Delete(*models.User) error
 }
 
+// Controller is a struct Struct to store pointer to cookiestore, database, and logger and any other things common to many controllers
 type Controller struct {
 	CookieStore *session.CookieStore
 	Users       Users
@@ -39,8 +39,9 @@ func (c *Controller) setup(cfg *util.Config, cs *session.CookieStore, um Users, 
 	c.AppConfig = cfg
 }
 
-// method to generate required default template data and return template object
-func (c *Controller) AddDefaultData(td *views.TemplateData) error {
+// DefaultData ia the method to generate required default template data and return template object
+func (c *Controller) DefaultData() (*views.TemplateData, error) {
+	td := &views.TemplateData{}
 	td.Root = fmt.Sprintf("http://%s:%d/", c.AppConfig.App.Host, c.AppConfig.App.Port)
-	return nil
+	return td, nil
 }

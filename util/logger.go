@@ -13,9 +13,9 @@ import (
 
 //Constants for accepting parameters indicating where logged messages should be output. Currently unused.
 const (
-	FILE_ONLY       = "fileonly"
-	FILE_AND_STDOUT = "fileandstdout"
-	STDOUT_ONLY     = "sdtoutonly"
+	FileOnly      = "fileonly"
+	FileAndStdout = "fileandstdout"
+	StdoutOnly    = "sdtoutonly"
 )
 
 //Flags used for selecting the info-only logging or debug level.
@@ -24,6 +24,7 @@ const (
 	INFO  = 1
 )
 
+// Logger adds log leves and multi logging
 type Logger struct {
 	*log.Logger
 	file        *os.File
@@ -31,6 +32,7 @@ type Logger struct {
 	DumpRequest bool
 }
 
+// NewLogger takes a string and some options and initializes a logger
 func NewLogger(logfile string, dr bool, level int) (*Logger, error) {
 
 	//Setup file logging
@@ -53,6 +55,7 @@ func NewLogger(logfile string, dr bool, level int) (*Logger, error) {
 	return &logger, err
 }
 
+//Close should be deferred any time writing to a file is selected
 func (l *Logger) Close() {
 	l.file.Close()
 }
@@ -66,7 +69,7 @@ func (l *Logger) SetLevel(lev int) error {
 	return errors.New("Level not recognized")
 }
 
-//Extends fmt.Print to only log messages if the log level is set to DEBUG
+//Debug extends fmt.Print to only log messages if the log level is set to DEBUG
 func (l *Logger) Debug(s ...interface{}) {
 	if l.level <= DEBUG {
 		l.SetPrefix("DEBUG: ")
@@ -75,7 +78,7 @@ func (l *Logger) Debug(s ...interface{}) {
 	}
 }
 
-//Extends fmt.Printf to only log messages if the log level is set to DEBUG
+//Debugf extends fmt.Printf to only log messages if the log level is set to DEBUG
 func (l *Logger) Debugf(s string, data ...interface{}) {
 	if l.level <= DEBUG {
 		l.SetPrefix("DEBUG: ")
@@ -84,7 +87,7 @@ func (l *Logger) Debugf(s string, data ...interface{}) {
 	}
 }
 
-//Extends fmt.Print
+//Info extends fmt.Print
 func (l *Logger) Info(s ...interface{}) {
 	if l.level <= INFO {
 		l.SetPrefix("INFO: ")
@@ -93,7 +96,7 @@ func (l *Logger) Info(s ...interface{}) {
 	}
 }
 
-//Extends fmt.Printf
+//Infof extends fmt.Printf
 func (l *Logger) Infof(format string, data ...interface{}) {
 	if l.level <= INFO {
 		l.SetPrefix("INFO: ")
