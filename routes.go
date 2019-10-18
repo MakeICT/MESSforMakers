@@ -12,7 +12,7 @@ import (
 func (a *application) appRouter() {
 
 	//middleware that should be called on every request get added to the chain here
-	c := alice.New(a.recoverPanic, a.loggingHandler)
+	c := alice.New(a.recoverPanic, a.loggingHandler, a.secureHeaders)
 
 	router := mux.NewRouter()
 

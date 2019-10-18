@@ -40,7 +40,6 @@ func (v *View) LoadTemplates(ff []string) error {
 		}
 		files = append(files, fg...)
 	}
-	//fmt.Println(files)
 	tc, err := template.ParseFiles(files...)
 	if err != nil {
 		return err

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -29,16 +30,35 @@ func main() {
 	}
 	defer app.Logger.Close()
 
-	srv := &http.Server{
+	tlsConfig := &tls.Config{
+		PreferServerCipherSuites: true,
+		CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP256},
+	}
+
+	tlsSrv := &http.Server{
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
 		Addr:         fmt.Sprintf("%s:%d", config.App.Host, config.App.Port),
 		ErrorLog:     app.Logger.Logger,
 		Handler:      app.Router,
+		TLSConfig:    tlsConfig,
 	}
 
+	srv := &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		IdleTimeout:  5 * time.Second,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Connection", "close")
+			url := "https://" + req.Host + req.URL.String()
+			http.Redirect(w, req, url, http.StatusMovedPermanently)
+		}),
+	}
+
+	go func() { app.Logger.Fatal(srv.ListenAndServe()) }()
+
 	app.Logger.Println("Starting Application on :" + strconv.Itoa(app.port))
-	app.Logger.Fatal(srv.ListenAndServe())
+	app.Logger.Fatal(tlsSrv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem"))
 
 }
