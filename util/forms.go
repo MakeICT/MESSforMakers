@@ -25,11 +25,7 @@ func (e formErrors) Get(f string) string {
 	if len(es) == 0 {
 		return ""
 	}
-	retString := ""
-	for _, v := range es {
-		retString = fmt.Sprintf("%s; %s", retString, v)
-	}
-	return retString
+	return strings.Join(es, "; ")
 }
 
 // Form will hold the form values to be validated and any Errors generated.
@@ -127,7 +123,7 @@ func (f *Form) MatchField(field, match string) {
 		return
 	}
 	if value1 != value2 {
-		f.Errors.Add(field, "Values must match")
+		f.Errors.Add(match, "Values must match")
 	}
 }
 

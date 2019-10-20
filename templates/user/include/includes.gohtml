@@ -9,34 +9,52 @@
 {{end}}
 
 {{define "signup_form"}}
-{{if .Data.Form}}
-    {{.Data.Form}}
-{{end}}
+
 <form action="/signup" method="POST">
+
 {{with .Data.Form}}
     <div class="card">
     
         <div class="card-content">
-                    
+            {{with .Errors.Get "saveError"}}
+                <span class="error">{{.}}</span>
+            {{end}}
             <div class="row">
-                <input placeholder="Name" type="text"  id="name" name="name" class="text-input" value="{{.Get "name"}}">
+                <div class="col s12 input-field">
+                    <input placeholder="Name" type="text"  id="name" name="name" class="text-input" value="{{.Get "name"}}">
+                    {{with .Errors.Get "name"}}
+                        <span class="error">{{.}}</span>
+                    {{end}}
+                </div>
             </div>
 
             <div class="row">
-                <div class="col s12 m6">
+                <div class="col s12 m6 input-field">
                     <input placeholder="Email" type="text"  id="email" name="email" class="text-input" value="{{.Get "email"}}">
+                    {{with .Errors.Get "email"}}
+                        <span class="error">{{.}}</span>
+                    {{end}}
                 </div>
-                <div class="col s12 m6">
+                <div class="col s12 m6 input-field">
                     <input placeholder="Confirm Email" type="text"  id="email2" name="email2" class="text-input" value="{{.Get "email2"}}">
+                    {{with .Errors.Get "email2"}}
+                        <span class="error">{{.}}</span>
+                    {{end}}
                 </div>
             </div>
 
              <div class="row">
-                <div class="col s12 m6">
-                    <input placeholder="Password" type="text"  id="password" name="password" class="text-input">
+                <div class="col s12 m6 input-field">
+                    <input placeholder="Password" type="password"  id="password" name="password" class="text-input">
+                    {{with .Errors.Get "password"}}
+                        <span class="error">{{.}}</span>
+                    {{end}}
                 </div>
-                <div class="col s12 m6">
-                    <input placeholder="Confirm Password" type="text"  id="password2" name="password2" class="text-input">
+                <div class="col s12 m6 input-field">
+                    <input placeholder="Confirm Password" type="password"  id="password2" name="password2" class="text-input">
+                    {{with .Errors.Get "password2"}}
+                        <span class="error">{{.}}</span>
+                    {{end}}
                 </div>
             </div>
 
@@ -53,11 +71,19 @@
                     <input type="text" class="text-input" id="dob.yyyy" name ="dob.yyyy" value="{{.Get "dob.yyyy"}}">
                     <label for="dob.yyyy">YYYY</label>
                 </div>
+                {{with .Errors.Get "dob"}}
+                    <div class="col s12">
+                        <span class="error">{{.}}</span>
+                    </div>
+                {{end}}
             </div>
 
             <div class="row">
-                <div class="col s12 m6">
+                <div class="col s12 m6 input-field">
                     <input placeholder="Phone" type="text"  id="phone" name="phone" class="text-input" value="{{.Get "phone"}}">
+                    {{with .Errors.Get "phone"}}
+                        <span class="error">{{.}}</span>
+                    {{end}}
                 </div>
                 <div class="col s12 m6">
                     <label>
@@ -78,6 +104,11 @@
             
             <div class="row">
                 {{$opt := .Get "membershipoption"}}
+                {{with .Errors.Get "membershipoption"}}
+                    <div class="col s12">
+                        <span class="error">{{.}}</span>
+                    </div>
+                {{end}}
                 <div class="col s12 m6">
                     <label>
                     <input name="membershipoption" type="radio" value="1" {{if eq $opt "1"}}checked{{end}} />

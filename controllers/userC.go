@@ -45,6 +45,46 @@ func (uc *UserController) SignupForm() func(http.ResponseWriter, *http.Request) 
 	})
 }
 
+// ListUsers generates alist of all users to display. For admin purposes.
+func (uc *UserController) ListUsers() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		form := util.NewForm(r.URL.Query())
+
+		page := 1
+		p := form.Get("page")
+		if p != "" {
+			n, err := strconv.ParseFloat(p, 64)
+			if err == nil && n != 0 {
+				page = int(n)
+			}
+		}
+
+		sort := form.Get("sort")
+		if sort != "" {
+			form.PermittedValues(sort, "name", "dob")
+			if !form.Valid() {
+				sort = ""
+			}
+		}
+
+		users, err := uc.Users.GetAll(20, page, sort, "asc")
+		if err != nil {
+			uc.serverError(w, err)
+			return
+		}
+
+		td, err := uc.DefaultData()
+		if err != nil {
+			http.Error(w, "could not generate default data", http.StatusInternalServerError)
+			return
+		}
+		td.Add("Users", users)
+		uc.UserView.Render(w, r, "users.gohtml", td)
+		return
+	})
+}
+
 //NewUser saves a new user to the database
 func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +104,19 @@ func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 		form.MatchPattern("email", util.EmailRegEx)
 		form.MatchPattern("phone", util.PhoneRegEx)
 
+		dob, err := time.Parse("01-02-2006", fmt.Sprintf("%s-%s-%s", r.FormValue("dob.mm"), r.FormValue("dob.dd"), r.FormValue("dob.yyyy")))
+		if err != nil {
+			form.Errors.Add("dob", "Could not recognize date")
+		}
+
+		var ms, mo int
+		ms = 1
+		if r.FormValue("membersignup") == "on" {
+			//The error from Atoi is ignored because the value has already been confirmed to be the string 1, 2, 3, 4, 5, or 6
+			mo, _ = strconv.Atoi(r.FormValue("membershipoption"))
+			ms = 1
+		}
+
 		if !form.Valid() {
 			//TODO add flash message that there were errors
 			td, err := uc.DefaultData()
@@ -72,8 +125,8 @@ func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 			}
 
 			//To minimize the number of times the plaintext password is passed back and forth, remove it before responding
-			form.Values["password"] = []string{}
-			form.Values["password2"] = []string{}
+			form.Set("password", "")
+			form.Set("password2", "")
 
 			td.Add("Form", form)
 			uc.UserView.Render(w, r, "signup.gohtml", td)
@@ -81,40 +134,41 @@ func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 		}
 
 		//TODO add gorilla/schema to scan a form directly into a struct
-		//TODO replace datepicker with mm dd yyyy boxes
-
-		dob, err := time.Parse("MM-DD-YYYY", fmt.Sprintf("%s-%s-%s", r.FormValue("dob.mm"), r.FormValue("dob.dd"), r.FormValue("dob.yyyy")))
-		if err != nil {
-			form.Errors.Add("dob.mm", "Could not recognize date")
-		}
-
-		mo := 0
-		if r.FormValue("membersignup") == "on" {
-			//The error from Atoi is ignored because the value has already been confirmed to be the string 1, 2, 3, 4, 5, or 6
-			mo, _ = strconv.Atoi(r.FormValue("membershipoption"))
-		}
 
 		u := &models.User{
-			Name:     r.FormValue("name"),
-			Email:    r.FormValue("email"),
-			Password: r.FormValue("password"),
-			DOB:      dob,
-			Phone:    r.FormValue("phone"),
-			TextOK:   r.FormValue("oktotext") == "on",
+			Name:             r.FormValue("name"),
+			Email:            r.FormValue("email"),
+			Password:         r.FormValue("password"),
+			DOB:              dob,
+			Phone:            r.FormValue("phone"),
+			TextOK:           r.FormValue("oktotext") == "on",
+			MembershipStatus: ms,
+			MembershipOption: mo,
 		}
 
-		err = uc.Users.Create(u, mo)
+		err = uc.Users.Create(u)
 		if err != nil {
-			td, err := uc.DefaultData()
-			if err != nil {
+
+			td, err2 := uc.DefaultData()
+			if err2 != nil {
 				http.Error(w, "could not generate default data", http.StatusInternalServerError)
 				return
 			}
-			td.Add("User", u)
+
+			form.Set("password", "")
+			form.Set("password2", "")
+
+			form.Errors.Add("saveError", fmt.Sprintf("Could not save user: %s", err.Error()))
+
+			td.Add("Form", form)
 			uc.UserView.Render(w, r, "signup.gohtml", td)
 			return
 		}
-		http.Redirect(w, r, fmt.Sprintf("%s:%d", uc.AppConfig.App.Host, uc.AppConfig.App.Port), http.StatusSeeOther)
+
+		redir := fmt.Sprintf("http://%s:%d/user/%d", uc.AppConfig.App.Host, uc.AppConfig.App.Port, u.ID)
+		uc.Logger.Debugf("Redirecting to: %s", redir)
+
+		http.Redirect(w, r, redir, http.StatusSeeOther)
 		return
 	})
 }

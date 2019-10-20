@@ -17,47 +17,8 @@
 		    <div class="nav-wrapper ">
 		      	<a href="#!" class="brand-logo">{{.PageTitle}}</a>
 		      	<a href="#" data-activates="mobile-nav" class="button-collapse"><i class="material-icons">menu</i></a>
-		      	<ul class="right hide-on-med-and-down valign-wrapper">
-		        	<li><a href="">Dropdown 1</a></li>
-		        	<li><a href="">Dropdown 2</a></li>
-		        	<li><a href="">Dropdown 3</a></li>
-		        	<li><a href="" class="valign-wrapper">User Name <img src="assets/images/sample-1s.jpg" class="circle responsive-img"></a></li>
-		      	</ul>
-		      	<ul class="side-nav" id="mobile-nav">
-		        	<li class="logo"><a>Logo Here</a></li>
-		        	<li class="logo"><a>Username Here</a></li>
-		        	<li class="no-padding">
-		        		<ul class="collapsible collapsible-accordion">
-		        			<li class="bold"><a class="collapsible-header">Collapsible Header 1</a>
-		        				<div class="collapsible-body">
-		        					<ul>
-		        						<li><a>item 1</a></li>
-		        						<li><a>item 2</a></li>
-		        						<li><a>item 3</a></li>
-		        					</ul>
-		        				</div>
-		        			</li>
-		        			<li class="bold active"><a class="collapsible-header active">Collapsible Header 2</a>
-		        				<div class="collapsible-body">
-		        					<ul>
-		        						<li><a>item 1</a></li>
-		        						<li class="active"><a>item 2</a></li>
-		        						<li><a>item 3</a></li>
-		        					</ul>
-		        				</div>
-		        			</li>
-		        			<li class="bold"><a class="collapsible-header">Collapsible Header 3</a>
-		        				<div class="collapsible-body">
-		        					<ul>
-		        						<li><a>item 1</a></li>
-		        						<li><a>item 2</a></li>
-		        						<li><a>item 3</a></li>
-		        					</ul>
-		        				</div>
-		        			</li>
-		        		</ul>
-		        	</li>
-		      	</ul>
+		      	
+		      	<!-- template sidnav here -->
 		    </div>
             {{template "page_nav" .}}
             {{template "view_nav" .}}
@@ -85,4 +46,48 @@
 
 </body>
 </html>
+{{end}}
+
+{{define "sidenav"}}
+<ul class="right hide-on-med-and-down valign-wrapper">
+	<li><a href="">Dropdown 1</a></li>
+	<li><a href="">Dropdown 2</a></li>
+	<li><a href="">Dropdown 3</a></li>
+	<li><a href="" class="valign-wrapper">User Name <img src="assets/images/sample-1s.jpg" class="circle responsive-img"></a></li>
+</ul>
+<ul class="side-nav" id="mobile-nav">
+	<li class="logo"><a>Logo Here</a></li>
+	<li class="logo"><a>Username Here</a></li>
+	<li class="no-padding">
+		<ul class="collapsible collapsible-accordion">
+			<li class="bold"><a class="collapsible-header">Collapsible Header 1</a>
+				<div class="collapsible-body">
+					<ul>
+						<li><a>item 1</a></li>
+						<li><a>item 2</a></li>
+						<li><a>item 3</a></li>
+					</ul>
+				</div>
+			</li>
+			<li class="bold active"><a class="collapsible-header active">Collapsible Header 2</a>
+				<div class="collapsible-body">
+					<ul>
+						<li><a>item 1</a></li>
+						<li class="active"><a>item 2</a></li>
+						<li><a>item 3</a></li>
+					</ul>
+				</div>
+			</li>
+			<li class="bold"><a class="collapsible-header">Collapsible Header 3</a>
+				<div class="collapsible-body">
+					<ul>
+						<li><a>item 1</a></li>
+						<li><a>item 2</a></li>
+						<li><a>item 3</a></li>
+					</ul>
+				</div>
+			</li>
+		</ul>
+	</li>
+</ul>
 {{end}}

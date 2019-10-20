@@ -12,7 +12,7 @@ import (
 func (a *application) appRouter() {
 
 	//middleware that should be called on every request get added to the chain here
-	c := alice.New(a.recoverPanic, a.loggingHandler)
+	c := alice.New(a.recoverPanic, a.securityHeaders, a.loggingHandler)
 
 	router := mux.NewRouter()
 
@@ -29,11 +29,12 @@ func (a *application) appRouter() {
 	router.HandleFunc("/login", a.UserC.LoginForm()).Methods("GET")
 	router.HandleFunc("/login", a.UserC.LoginUser()).Methods("POST")
 	router.HandleFunc("/logout", a.UserC.Logout()).Methods("POST")
+	router.HandleFunc("/user", noRoute("currently logged in user")).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}", noRoute("show specific user")).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}/edit", noRoute("form to edit user")).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}", noRoute("save user update to db")).Methods("POST").MatcherFunc(makeMatcher("patch"))
 	router.HandleFunc("/user/{id:[0-9]+}", noRoute("delete user")).Methods("POST").MatcherFunc(makeMatcher("delete"))
-	router.HandleFunc("/users", noRoute("users")).Methods("GET")
+	router.HandleFunc("/users", a.UserC.ListUsers()).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}/ice", noRoute("update ice")).Methods("POST").MatcherFunc(makeMatcher("patch"))
 	router.HandleFunc("/user/{id:[0-9]+}/ice", noRoute("delete ice")).Methods("POST").MatcherFunc(makeMatcher("delete"))
 	router.HandleFunc("/user/{id:[0-9]+}/uploadwaiver", noRoute("uploadwaiver")).Methods("GET")

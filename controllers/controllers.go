@@ -4,6 +4,8 @@ package controllers
 
 import (
 	"fmt"
+	"net/http"
+	"runtime/debug"
 
 	"github.com/makeict/MESSforMakers/models"
 	"github.com/makeict/MESSforMakers/session"
@@ -14,8 +16,8 @@ import (
 // Users interface defines the methods that a Users model must fulfill. Allows mocking with a fake database for testing.
 type Users interface {
 	Get(int) (*models.User, error)
-	GetAll(int, int) ([]models.User, error)
-	Create(*models.User, int) error
+	GetAll(int, int, string, string) ([]models.User, error)
+	Create(*models.User) error
 	Update(*models.User) error
 	Delete(*models.User) error
 }
@@ -44,4 +46,19 @@ func (c *Controller) DefaultData() (*views.TemplateData, error) {
 	td := &views.TemplateData{}
 	td.Root = fmt.Sprintf("http://%s:%d/", c.AppConfig.App.Host, c.AppConfig.App.Port)
 	return td, nil
+}
+
+func (c *Controller) serverError(w http.ResponseWriter, err error) {
+	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+	c.Logger.Output(2, trace)
+
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+}
+
+func (c *Controller) clientError(w http.ResponseWriter, status int) {
+	http.Error(w, http.StatusText(status), status)
+}
+
+func (c *Controller) notFound(w http.ResponseWriter) {
+	c.clientError(w, http.StatusNotFound)
 }

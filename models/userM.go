@@ -15,16 +15,16 @@ type UserModel struct {
 
 // User store all information about a user
 type User struct {
-	ID               int
-	Name             string
-	Email            string
-	Password         string
-	DOB              time.Time
-	Phone            string
-	TextOK           bool
-	MembershipStatus int
-	MembershipOption int
-	RBACRole         int
+	ID               int       `db:"id"`
+	Name             string    `db:"name"`
+	Email            string    `db:"username"`
+	Password         string    `db:"password"`
+	DOB              time.Time `db:"dob"`
+	Phone            string    `db:"phone"`
+	TextOK           bool      `db:"text_ok"`
+	MembershipStatus int       `db:"membership_status_id"`
+	MembershipOption int       `db:"membership_option"`
+	RBACRole         int       `db:"rbac_role_id"`
 }
 
 //Get one user (need user ID populated)
@@ -33,11 +33,10 @@ func (um *UserModel) Get(int) (*User, error) {
 }
 
 //GetAll returns "count" many users, starting "offset" users from the beginning
-func (um *UserModel) GetAll(count, offset int) ([]User, error) {
-	if err := um.DB.Ping(); err != nil {
-		return nil, err
-	}
-	rows, err := um.DB.Queryx("SELECT * FROM users")
+func (um *UserModel) GetAll(count, page int, sortBy, direction string) ([]User, error) {
+	offset := (page - 1) * count //for page 1 the offset should be 0, etc.
+	q := um.DB.Rebind("SELECT id, name, username, dob, phone FROM member ORDER BY name LIMIT ? OFFSET ?")
+	rows, err := um.DB.Queryx(q, count, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -55,8 +54,34 @@ func (um *UserModel) GetAll(count, offset int) ([]User, error) {
 }
 
 //Create user (need user details populated)
-func (um *UserModel) Create(u *User, mo int) error {
-	return fmt.Errorf("not set up to save user")
+func (um *UserModel) Create(u *User) error {
+	//TODO calculate membership_expires
+	q := um.DB.Rebind(`
+	INSERT INTO member 
+		(name, username, password, dob, phone, membership_status_id, rbac_role_id, created_at, updated_at)
+	VALUES
+		(?, ?, ?, ?, ?, ?, ?, ?, ?)
+	RETURNING id`)
+	var id int
+	fmt.Printf("%+v\n", u)
+	err := um.DB.Get(
+		&id,
+		q,
+		u.Name,
+		u.Email,
+		u.Password,
+		u.DOB,
+		u.Phone,
+		u.MembershipStatus,
+		1,
+		time.Now(),
+		time.Now(),
+	)
+	if err != nil {
+		return err
+	}
+	u.ID = int(id)
+	return nil
 }
 
 //Update user (need user details populated)
