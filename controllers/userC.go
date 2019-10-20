@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/makeict/MESSforMakers/models"
-	"github.com/makeict/MESSforMakers/session"
 	"github.com/makeict/MESSforMakers/util"
 	"github.com/makeict/MESSforMakers/views"
 )
@@ -19,8 +18,8 @@ type UserController struct {
 }
 
 //Initialize performs the required setup for a user controller
-func (uc *UserController) Initialize(cfg *util.Config, cs *session.CookieStore, um Users, l *util.Logger) error {
-	uc.setup(cfg, cs, um, l)
+func (uc *UserController) Initialize(cfg *util.Config, um Users, l *util.Logger) error {
+	uc.setup(cfg, um, l)
 
 	uc.UserView = views.View{}
 

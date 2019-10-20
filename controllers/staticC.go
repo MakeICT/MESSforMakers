@@ -5,8 +5,6 @@ import (
 	"net/http"
 
 	"github.com/makeict/MESSforMakers/models"
-
-	"github.com/makeict/MESSforMakers/session"
 	"github.com/makeict/MESSforMakers/util"
 	"github.com/makeict/MESSforMakers/views"
 )
@@ -18,8 +16,8 @@ type StaticController struct {
 }
 
 //Initialize performs the required setup for a static controller
-func (sc *StaticController) Initialize(cfg *util.Config, cs *session.CookieStore, um Users, l *util.Logger) error {
-	sc.setup(cfg, cs, um, l)
+func (sc *StaticController) Initialize(cfg *util.Config, um Users, l *util.Logger) error {
+	sc.setup(cfg, um, l)
 	sc.StaticView = views.View{}
 
 	if err := sc.StaticView.LoadTemplates("static"); err != nil {

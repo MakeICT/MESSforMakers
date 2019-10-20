@@ -10,20 +10,18 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/makeict/MESSforMakers/models"
-	"github.com/makeict/MESSforMakers/session"
 	"github.com/makeict/MESSforMakers/util"
 )
 
 // database connection, cookie store, etc..
 type application struct {
-	CookieStore *session.CookieStore
-	Logger      *util.Logger
-	DB          *sqlx.DB
-	Router      http.Handler
-	port        int
-	Config      *util.Config
-	UserC       controllers.UserController
-	StaticC     controllers.StaticController
+	Logger  *util.Logger
+	DB      *sqlx.DB
+	Router  http.Handler
+	port    int
+	Config  *util.Config
+	UserC   controllers.UserController
+	StaticC controllers.StaticController
 }
 
 func newApplication(config *util.Config) (*application, error) {
@@ -50,15 +48,14 @@ func newApplication(config *util.Config) (*application, error) {
 		return nil, fmt.Errorf("Error initializing database :: %v", err)
 	}
 
-	app.CookieStore = session.NewCookieStore("mess-data")
 	app.DB = db
 	app.port = config.App.Port
 
-	if err := app.UserC.Initialize(app.Config, app.CookieStore, &models.UserModel{DB: app.DB}, app.Logger); err != nil {
+	if err := app.UserC.Initialize(app.Config, &models.UserModel{DB: app.DB}, app.Logger); err != nil {
 		app.Logger.Fatalf("Failed to initialize user controller: %v", err)
 	}
 
-	if err := app.StaticC.Initialize(app.Config, app.CookieStore, &models.UserModel{DB: app.DB}, app.Logger); err != nil {
+	if err := app.StaticC.Initialize(app.Config, &models.UserModel{DB: app.DB}, app.Logger); err != nil {
 		app.Logger.Fatalf("Failed to initialize controller for static routes: %v", err)
 	}
 
