@@ -7,9 +7,8 @@
 {{- end}}
 
 {{define "page_content"}}
-	<p>Flash Message: {{.Flash}}<p>
-	<p class="flow-text">main content</p>
-	<p>{{.}}</p>
+    <p>Flash Message: {{.Flash}}<p>
+	<p>{{.Data.User}}</p>
 {{- end}}
 
 {{define "page_footer"}}

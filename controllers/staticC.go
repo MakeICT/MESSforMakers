@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/golangcollege/sessions"
 	"github.com/makeict/MESSforMakers/models"
 	"github.com/makeict/MESSforMakers/util"
 	"github.com/makeict/MESSforMakers/views"
@@ -16,8 +17,8 @@ type StaticController struct {
 }
 
 //Initialize performs the required setup for a static controller
-func (sc *StaticController) Initialize(cfg *util.Config, um Users, l *util.Logger) error {
-	sc.setup(cfg, um, l)
+func (sc *StaticController) Initialize(cfg *util.Config, um Users, l *util.Logger, s *sessions.Session) error {
+	sc.setup(cfg, um, l, s)
 	sc.StaticView = views.View{}
 
 	if err := sc.StaticView.LoadTemplates("static"); err != nil {
@@ -31,7 +32,7 @@ func (sc *StaticController) Initialize(cfg *util.Config, um Users, l *util.Logge
 func (sc *StaticController) Root() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		td, err := sc.DefaultData()
+		td, err := sc.DefaultData(r)
 
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

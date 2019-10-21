@@ -2,10 +2,14 @@ package controllers
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
+
+	"github.com/golangcollege/sessions"
 	"github.com/makeict/MESSforMakers/models"
 	"github.com/makeict/MESSforMakers/util"
 	"github.com/makeict/MESSforMakers/views"
@@ -18,8 +22,8 @@ type UserController struct {
 }
 
 //Initialize performs the required setup for a user controller
-func (uc *UserController) Initialize(cfg *util.Config, um Users, l *util.Logger) error {
-	uc.setup(cfg, um, l)
+func (uc *UserController) Initialize(cfg *util.Config, um Users, l *util.Logger, s *sessions.Session) error {
+	uc.setup(cfg, um, l, s)
 
 	uc.UserView = views.View{}
 
@@ -33,19 +37,22 @@ func (uc *UserController) Initialize(cfg *util.Config, um Users, l *util.Logger)
 //SignupForm displays the signup form
 func (uc *UserController) SignupForm() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		td, err := uc.DefaultData()
+		td, err := uc.DefaultData(r)
 		if err != nil {
 			http.Error(w, "could not generate default data", http.StatusInternalServerError)
 			return
 		}
 		td.Add("Form", util.NewForm(nil))
-		uc.UserView.Render(w, r, "signup.gohtml", td)
-		return
+
+		if err := uc.UserView.Render(w, r, "signup.gohtml", td); err != nil {
+			uc.serverError(w, err)
+			return
+		}
 	})
 }
 
-// ListUsers generates alist of all users to display. For admin purposes.
-func (uc *UserController) ListUsers() func(http.ResponseWriter, *http.Request) {
+// List generates alist of all users to display. For admin purposes.
+func (uc *UserController) List() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		form := util.NewForm(r.URL.Query())
@@ -73,19 +80,51 @@ func (uc *UserController) ListUsers() func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		td, err := uc.DefaultData()
+		td, err := uc.DefaultData(r)
 		if err != nil {
 			http.Error(w, "could not generate default data", http.StatusInternalServerError)
 			return
 		}
 		td.Add("Users", users)
-		uc.UserView.Render(w, r, "users.gohtml", td)
-		return
+		if err := uc.UserView.Render(w, r, "users.gohtml", td); err != nil {
+			uc.serverError(w, err)
+			return
+		}
 	})
 }
 
-//NewUser saves a new user to the database
-func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
+//Show gets the parameter from the url and gets the details for that user from the database
+func (uc *UserController) Show() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id, ok := util.IntOK(vars["id"], 1, math.MaxInt8)
+		if !ok {
+			uc.clientError(w, http.StatusBadRequest)
+			return
+		}
+		user, err := uc.Users.Get(id)
+		if err != nil {
+			uc.serverError(w, err)
+			return
+		}
+
+		td, err := uc.DefaultData(r)
+		if err != nil {
+			uc.serverError(w, err)
+		}
+
+		td.Add("User", user)
+		uc.Logger.Printf("user: %+v", user)
+
+		if err := uc.UserView.Render(w, r, "show.gohtml", td); err != nil {
+			uc.serverError(w, err)
+			return
+		}
+	})
+}
+
+//New saves a new user to the database
+func (uc *UserController) New() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		r.ParseForm()
@@ -103,6 +142,8 @@ func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 		form.MatchPattern("email", util.EmailRegEx)
 		form.MatchPattern("phone", util.PhoneRegEx)
 
+		//TODO should recognize non-zero-padded months and days e.g. 6 for june
+		//would help to confirm int on all three fields, and supply reasonable ranges (1-12, 1-31, and 1900-curyear)
 		dob, err := time.Parse("01-02-2006", fmt.Sprintf("%s-%s-%s", r.FormValue("dob.mm"), r.FormValue("dob.dd"), r.FormValue("dob.yyyy")))
 		if err != nil {
 			form.Errors.Add("dob", "Could not recognize date")
@@ -117,11 +158,13 @@ func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 		}
 
 		if !form.Valid() {
-			//TODO add flash message that there were errors
-			td, err := uc.DefaultData()
+			td, err := uc.DefaultData(r)
 			if err != nil {
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
+
+			//TODO this erases any existing flash messages. refactor to have flash be a slice of strings
+			td.Flash = "There were errors saving the form"
 
 			//To minimize the number of times the plaintext password is passed back and forth, remove it before responding
 			form.Set("password", "")
@@ -131,8 +174,6 @@ func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 			uc.UserView.Render(w, r, "signup.gohtml", td)
 			return
 		}
-
-		//TODO add gorilla/schema to scan a form directly into a struct
 
 		u := &models.User{
 			Name:             r.FormValue("name"),
@@ -148,7 +189,7 @@ func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 		err = uc.Users.Create(u)
 		if err != nil {
 
-			td, err2 := uc.DefaultData()
+			td, err2 := uc.DefaultData(r)
 			if err2 != nil {
 				http.Error(w, "could not generate default data", http.StatusInternalServerError)
 				return
@@ -157,17 +198,16 @@ func (uc *UserController) NewUser() func(http.ResponseWriter, *http.Request) {
 			form.Set("password", "")
 			form.Set("password2", "")
 
-			form.Errors.Add("saveError", fmt.Sprintf("Could not save user: %s", err.Error()))
+			td.Flash = fmt.Sprintf("Could not save user: %s", err.Error())
 
 			td.Add("Form", form)
 			uc.UserView.Render(w, r, "signup.gohtml", td)
 			return
 		}
 
-		redir := fmt.Sprintf("http://%s:%d/user/%d", uc.AppConfig.App.Host, uc.AppConfig.App.Port, u.ID)
-		uc.Logger.Debugf("Redirecting to: %s", redir)
+		uc.Session.Put(r, "flash", "Successfully saved user!")
 
-		http.Redirect(w, r, redir, http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("http://%s:%d/user/%d", uc.AppConfig.App.Host, uc.AppConfig.App.Port, u.ID), http.StatusSeeOther)
 		return
 	})
 }

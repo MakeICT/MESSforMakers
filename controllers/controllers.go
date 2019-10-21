@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"runtime/debug"
 
+	"github.com/golangcollege/sessions"
+
 	"github.com/makeict/MESSforMakers/models"
 	"github.com/makeict/MESSforMakers/util"
 	"github.com/makeict/MESSforMakers/views"
@@ -26,22 +28,26 @@ type Controller struct {
 	Users     Users
 	Logger    *util.Logger
 	AppConfig *util.Config
+	Session   *sessions.Session
 }
 
 // method to create a new struct and store the information from the app, passed as args
 // Requiring the information passed as args avoids imports loop
 // the general controller constructor will be called by the specific controller constructors
 // the specific controller constructors can then initialize and embed their own templates.
-func (c *Controller) setup(cfg *util.Config, um Users, l *util.Logger) {
+func (c *Controller) setup(cfg *util.Config, um Users, l *util.Logger, s *sessions.Session) {
 	c.Users = um
 	c.Logger = l
 	c.AppConfig = cfg
+	c.Session = s
 }
 
 // DefaultData ia the method to generate required default template data and return template object
-func (c *Controller) DefaultData() (*views.TemplateData, error) {
+func (c *Controller) DefaultData(r *http.Request) (*views.TemplateData, error) {
 	td := &views.TemplateData{}
 	td.Root = fmt.Sprintf("http://%s:%d/", c.AppConfig.App.Host, c.AppConfig.App.Port)
+	c.Logger.Printf("Added root path: %s", td.Root)
+	td.Flash = c.Session.PopString(r, "flash")
 	return td, nil
 }
 
