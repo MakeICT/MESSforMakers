@@ -1,0 +1,155 @@
+{{define "view_header"}}
+{{end}}
+
+{{define "view_nav"}}
+{{end}}
+
+{{define "view_footer"}}
+<script type="text/javascript" src="{{.Root}}assets/js/util.js"></script>
+{{end}}
+
+{{define "signup_form"}}
+
+<form action="/signup" method="POST">
+
+{{with .Data.Form}}
+    <div class="card">
+    
+        <div class="card-content">
+            {{with .Errors.Get "saveError"}}
+                <span class="error">{{.}}</span>
+            {{end}}
+            <div class="row">
+                <div class="col s12 input-field">
+                    <input placeholder="Name" type="text"  id="name" name="name" class="text-input" value="{{.Get "name"}}">
+                    {{with .Errors.Get "name"}}
+                        <span class="error">{{.}}</span>
+                    {{end}}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col s12 m6 input-field">
+                    <input placeholder="Email" type="text"  id="email" name="email" class="text-input" value="{{.Get "email"}}">
+                    {{with .Errors.Get "email"}}
+                        <span class="error">{{.}}</span>
+                    {{end}}
+                </div>
+                <div class="col s12 m6 input-field">
+                    <input placeholder="Confirm Email" type="text"  id="email2" name="email2" class="text-input" value="{{.Get "email2"}}">
+                    {{with .Errors.Get "email2"}}
+                        <span class="error">{{.}}</span>
+                    {{end}}
+                </div>
+            </div>
+
+             <div class="row">
+                <div class="col s12 m6 input-field">
+                    <input placeholder="Password" type="password"  id="password" name="password" class="text-input">
+                    {{with .Errors.Get "password"}}
+                        <span class="error">{{.}}</span>
+                    {{end}}
+                </div>
+                <div class="col s12 m6 input-field">
+                    <input placeholder="Confirm Password" type="password"  id="password2" name="password2" class="text-input">
+                    {{with .Errors.Get "password2"}}
+                        <span class="error">{{.}}</span>
+                    {{end}}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col s2 input-field">
+                    <input type="text" class="text-input" id="dob.mm" name ="dob.mm" value="{{.Get "dob.mm"}}">
+                    <label for="dob.mm">MM</label>
+                </div>
+                <div class="col s2 input-field">
+                    <input type="text" class="text-input" id="dob.dd" name ="dob.dd"value="{{.Get "dob.dd"}}">
+                    <label for="dob.dd">DD</label>
+                </div>
+                <div class="col s4 input-field">
+                    <input type="text" class="text-input" id="dob.yyyy" name ="dob.yyyy" value="{{.Get "dob.yyyy"}}">
+                    <label for="dob.yyyy">YYYY</label>
+                </div>
+                {{with .Errors.Get "dob"}}
+                    <div class="col s12">
+                        <span class="error">{{.}}</span>
+                    </div>
+                {{end}}
+            </div>
+
+            <div class="row">
+                <div class="col s12 m6 input-field">
+                    <input placeholder="Phone" type="text"  id="phone" name="phone" class="text-input" value="{{.Get "phone"}}">
+                    {{with .Errors.Get "phone"}}
+                        <span class="error">{{.}}</span>
+                    {{end}}
+                </div>
+                <div class="col s12 m6">
+                    <label>
+                        <input type="checkbox" id="oktotext" name="oktotext" {{if eq (.Get "oktotext") "on"}}checked{{end}} />
+                        <span>Ok to text?</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col s12 m6">
+                    <label>
+                        <input type="checkbox" id="membersignup" name="membersignup" {{if eq (.Get "membersignup") "on"}}checked{{end}} />
+                        <span>Signup for MakeICT Membership?</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="row">
+                {{$opt := .Get "membershipoption"}}
+                {{with .Errors.Get "membershipoption"}}
+                    <div class="col s12">
+                        <span class="error">{{.}}</span>
+                    </div>
+                {{end}}
+                <div class="col s12 m6">
+                    <label>
+                    <input name="membershipoption" type="radio" value="1" {{if eq $opt "1"}}checked{{end}} />
+                    <span>1 month</span>
+                    </label>
+                    <br>
+                    <label>
+                    <input name="membershipoption" type="radio" value="2" {{if eq $opt "2"}}checked{{end}} />
+                    <span>6 months</span>
+                    </label>
+                    <br>
+                    <label>
+                    <input name="membershipoption" type="radio" value="3" {{if eq $opt "3"}}checked{{end}} />
+                    <span>12 months</span>
+                    </label>
+                </div>
+                <div class="col s12 m6">
+                    <label>
+                    <input name="membershipoption" type="radio" value="4" {{if eq $opt "4"}}checked{{end}} />
+                    <span>1 month - Recurring</span>
+                    </label>
+                    <br>
+                    <label>
+                    <input name="membershipoption" type="radio" value="5" {{if eq $opt "5"}}checked{{end}} />
+                    <span>6 months - Recurring</span>
+                    </label>
+                    <br>
+                    <label>
+                    <input name="membershipoption" type="radio" value="6" {{if eq $opt "6"}}checked{{end}} />
+                    <span>12 months - Recurring</span>
+                    </label>
+                </div>
+            </div>
+            
+        </div>
+        
+        <div class="card-action right-align">
+            <input type='submit'  value='add' class='btn'>
+        </div>
+      				
+	</div>
+{{end}}    
+</form>
+{{end}}

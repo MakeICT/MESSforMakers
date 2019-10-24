@@ -1,8 +1,3 @@
---
-
--- This command must be run as superuser once per database:
-CREATE EXTENSION btree_gist;
-
 --------------------------------------------------------------------------------------------------------------------------------
 -- Tables need for control of member in the site
 --------------------------------------------------------------------------------------------------------------------------------
@@ -109,6 +104,19 @@ CREATE TABLE member (
     , UNIQUE (username)  -- members cannot sign up for multiple accounts with the same email
 );
 COMMENT ON TABLE member IS 'Core table of all members and guests';
+
+CREATE TABLE member_address (
+	id SERIAL PRIMARY KEY
+	, member_id INTEGER NOT NULL REFERENCES member(id) ON DELETE CASCADE
+	, addr_type TEXT NOT NULL --home or billing
+	, addr1 TEXT NOT NULL
+	, addr2 TEXT
+	, city TEXT NOT NULL
+	, state TEXT NOT NULL
+	, zip TEXT NOT NULL
+	, UNIQUE(member_id, addr_type)
+);
+COMMENT ON TABLE member_address IS 'Home and billing addresses for members and guests';
 
 CREATE TABLE member_access_token (
       id SERIAL PRIMARY KEY

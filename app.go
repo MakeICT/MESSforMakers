@@ -7,31 +7,41 @@ import (
 	"net/http/httputil"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/golangcollege/sessions"
 	"github.com/jmoiron/sqlx"
-	"github.com/justinas/alice"
 	_ "github.com/lib/pq"
 
 	"github.com/makeict/MESSforMakers/controllers"
 	"github.com/makeict/MESSforMakers/models"
-	"github.com/makeict/MESSforMakers/session"
 	"github.com/makeict/MESSforMakers/util"
 )
 
 // database connection, cookie store, etc..
 type application struct {
-	cookieStore *session.CookieStore
-	logger      *util.Logger
-	DB          *sqlx.DB
-	Router      http.Handler
-	port        int
+	Logger  *util.Logger
+	DB      *sqlx.DB
+	Router  http.Handler
+	Config  *util.Config
+	UserC   controllers.UserController
+	StaticC controllers.StaticController
+	Session *sessions.Session
+	port    int
 }
 
-func newApplication(config *Config) *application {
+func newApplication(config *util.Config) (*application, error) {
+
+	//Set up a logger middleware
+	logger, err := util.NewLogger("makeict.log", config.Logger.DumpRequest, util.DEBUG) //KNOWN BUG, first arg is ignored
+	if err != nil {
+		return nil, fmt.Errorf("Error creating logger :: %v", err)
+	}
+
+	app := application{Logger: logger, Config: config}
 
 	//set up the database
 	db, err := models.InitDB(fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/%s",
+		"sslmode=%s user=%s password=%s host=%s port=%d dbname=%s",
+		config.Database.SSL,
 		config.Database.Username,
 		config.Database.Password,
 		config.Database.Host,
@@ -39,79 +49,26 @@ func newApplication(config *Config) *application {
 		config.Database.Database,
 	))
 	if err != nil {
-		fmt.Printf("Error initializing database :: %v", err)
-		panic(1)
+		return nil, fmt.Errorf("Error initializing database :: %v", err)
+	}
+	session := sessions.New([]byte("H97LwY3g5X5W0AJjdw4yEIZCIasiU2FRg"))
+	session.Lifetime = 12 * time.Hour
+	app.Session = session
+	app.DB = db
+	app.port = config.App.Port
+
+	if err := app.UserC.Initialize(app.Config, &models.UserModel{DB: app.DB}, app.Logger, app.Session); err != nil {
+		app.Logger.Fatalf("Failed to initialize user controller: %v", err)
 	}
 
-	//Initialize the cookie store
-	cs := session.NewCookieStore("mess-data")
-
-	//set up authentication
-	authMiddleware := authenticationMiddleware{cs, db}
-
-	//Set up a logger middleware
-	logger, err := util.NewLogger()
-	if err != nil {
-		fmt.Printf("Error creating logger :: %v", err)
-		panic(1)
-	}
-	loggingMiddleware := loggingMiddleware{config.Logger.DumpRequest, logger}
-
-	//middleware that should be called on every request get added to the chain here
-	commonHandlers := alice.New(loggingMiddleware.loggingHandler, authMiddleware.authenticationHandler)
-
-	// app needs to be created and have the DB initialized so that appRouter can pass the connection pool to the controllers
-	app := application{
-		cookieStore: cs,
-		logger:      logger,
-		DB:          db,
-		port:        config.App.Port,
+	if err := app.StaticC.Initialize(app.Config, &models.UserModel{DB: app.DB}, app.Logger, app.Session); err != nil {
+		app.Logger.Fatalf("Failed to initialize controller for static routes: %v", err)
 	}
 
 	//initialize all the routes
-	app.appRouter(commonHandlers)
+	app.appRouter()
 
-	return &app
-}
-
-func (a *application) appRouter(c alice.Chain) {
-
-	router := mux.NewRouter()
-
-	//create the controllers so they are more readable in the routes table
-	userC := controllers.User(a.DB, a.cookieStore)
-	NIC := controllers.NotImplementedController()
-	staticC := controllers.StaticController()
-
-	//set all the routes here. Uses gorilla/mux so routes can use regex,
-	//and following with .Methods() allows for limiting them to only specific HTTP methods
-	// Routes that utilize the same controller and switch inside the controller on method type can use the same table entry.
-	router.HandleFunc("/", staticC.Root()).Methods("GET")
-	router.HandleFunc("/join", staticC.Join()).Methods("GET")
-	router.HandleFunc("/reserve", staticC.Reservations()).Methods("GET")
-	router.HandleFunc("/signup", userC.Create()).Methods("GET", "POST")
-	router.HandleFunc("/login", userC.Login()).Methods("GET", "POST")
-	router.HandleFunc("/user/{id:[0-9]+}", userC.Show()).Methods("GET")
-	router.HandleFunc("/user/{id:[0-9]+}/edit", userC.Edit()).Methods("GET", "POST")
-	router.HandleFunc("/user/{id:[0-9]+}", NIC.None("delete user")).Methods("DELETE")
-	router.HandleFunc("/users", userC.Index()).Methods("GET")
-	router.HandleFunc("/user/{id:[0-9]+}/ice", NIC.None("update ice")).Methods("PATCH")
-	router.HandleFunc("/user/{id:[0-9]+}/ice", NIC.None("delete ice")).Methods("DELETE")
-	router.HandleFunc("/user/{id:[0-9]+}/uploadwaiver", NIC.None("uploadwaiver")).Methods("GET")
-	router.HandleFunc("/user/{id:[0-9]+}/uploadwaiver", NIC.None("save waiver")).Methods("POST")
-	router.HandleFunc("/user/{id:[0-9]+}/waiver", NIC.None("show waiver")).Methods("GET")
-	router.HandleFunc("/user/{id:[0-9]+}/waiver", NIC.None("delete waiver")).Methods("DELETE")
-	router.HandleFunc("/admin", NIC.None("admin dashboard")).Methods("GET")
-
-	//TODO: need better static file serving to prevent directory browsing
-	// see https://groups.google.com/forum/#!topic/golang-nuts/bStLPdIVM6w
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
-
-	//TODO: need to implement handlers for 404 and 405, the implement router.NotFoundHandler and router.MethodNotAllowedHandler
-
-	//set the app router. Alice will pass all the requests through the middleware chain first,
-	//then to the functions defined above
-	a.Router = c.Then(router)
+	return &app, nil
 }
 
 //Middleware
@@ -139,7 +96,7 @@ func (l *loggingMiddleware) loggingHandler(h http.Handler) http.Handler {
 }
 
 type authenticationMiddleware struct {
-	CookieStore *session.CookieStore
+	CookieStore *sessions.CookieStore
 	DB          *sqlx.DB
 }
 

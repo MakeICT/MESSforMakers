@@ -1,40 +1,44 @@
-/*
- MESS for Makers - An open source member and event management platform
-    Copyright (C) 2017  Sam Schurter
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package main
 
 import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/makeict/MESSforMakers/util"
 )
 
-const appPort = "8080"
-
+//Main reads the configuration immediately and dies if it can't be read.
+//There is no default configuration and no command line flags.
+//All options are contained in the config.json file
 func main() {
-	config, err := InitConfig("config.json")
+	//Read the configuration and die if it can't be read.
+	//This does NOT guarantee that sensible options have been set, only that the file can be read.
+	config, err := util.InitConfig("config.json")
 	if err != nil {
+		//No log files have been set up yet, so just dump the error to stdout
 		fmt.Print("Cannot parse the configuration file")
 		panic(1)
 	}
-	app := newApplication(config)
-	defer app.logger.Close()
 
-	app.logger.Println("Starting Application")
-	app.logger.Fatal(http.ListenAndServe(":"+strconv.Itoa(app.port), app.Router))
+	//TODO newApplication should return an error if the configuration is invalid
+	app, err := newApplication(config)
+	if err != nil {
+		fmt.Printf("Could not create the application: %v", err)
+	}
+	defer app.Logger.Close()
+
+	srv := &http.Server{
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
+		Addr:         fmt.Sprintf("%s:%d", config.App.Host, config.App.Port),
+		ErrorLog:     app.Logger.Logger,
+		Handler:      app.Router,
+	}
+
+	app.Logger.Println("Starting Application on :" + strconv.Itoa(app.port))
+	app.Logger.Fatal(srv.ListenAndServe())
 
 }

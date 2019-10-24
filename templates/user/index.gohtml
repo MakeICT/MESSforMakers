@@ -1,10 +1,16 @@
-{{define "meta-head"}}
-	<title>MakeICT Administration | Page Title</title>
-{{ end }}
+{{template "site_default" .}}
 
-{{ define "content" }}
-			<div class="col s12 m2 l1">
-				<p class="flow-text">main content</p>
-				<p>{{.}}</p>
-			</div>
-{{end}}
+{{define "page_header"}}
+{{- end}}
+
+{{define "page_nav"}}
+{{- end}}
+
+{{define "page_content"}}
+	<p>Flash Message: {{.Flash}}<p>
+	<p class="flow-text">main content</p>
+	<p>{{.}}</p>
+{{- end}}
+
+{{define "page_footer"}}
+{{- end}}

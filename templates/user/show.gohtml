@@ -1,8 +1,14 @@
-{{ define "meta-head" }}
-    <title>MakeICT | {{if .Person.FirstName}}{{.Person.FirstName}} {{.Person.LastName}}{{end}}</title>
-{{ end }}
+{{template "site_default" .}}
 
-{{ define "content" }}
+{{define "page_header"}}
+{{- end}}
+
+{{define "page_nav"}}
+{{- end}}
+
+{{define "page_content"}}
+    <p>Flash Message: {{.Flash}}<p>
+
   <h4>My Membership</h4>
   <div class="row">
     <div class="col s3 m2">
@@ -76,3 +82,6 @@
 
 
 {{ end }}
+
+{{define "page_footer"}}
+{{- end}}
