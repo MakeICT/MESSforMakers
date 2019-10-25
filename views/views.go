@@ -35,12 +35,6 @@ func (v *View) Render(w http.ResponseWriter, r *http.Request, page string, td *T
 // LoadTemplates takes a string of folders and loads the templates into the view
 func (v *View) LoadTemplates(f string) error {
 
-	//get list of pages from view folder
-	//for each page in view folder
-	//attach all from layouts
-	//attach all from */includes
-	//create template and store in
-
 	tc := map[string]*template.Template{}
 
 	pages, err := filepath.Glob(fmt.Sprintf("templates/%s/*.gohtml", f))
@@ -56,20 +50,12 @@ func (v *View) LoadTemplates(f string) error {
 			return fmt.Errorf("could not create template from page: %v", err)
 		}
 
-		lf, err := filepath.Glob("templates/layouts/*.gohtml")
-		if err != nil {
-			return fmt.Errorf("could not find layout templates: %v", err)
-		}
-		t, err = t.ParseFiles(lf...)
+		t, err = t.ParseGlob("templates/layouts/*.gohtml")
 		if err != nil {
 			return fmt.Errorf("could not create layout templates: %v", err)
 		}
 
-		includef, err := filepath.Glob(fmt.Sprintf("templates/%s/include/*.gohtml", f))
-		if err != nil {
-			return fmt.Errorf("could not find view include templates: %v", err)
-		}
-		t, err = t.ParseFiles(includef...)
+		t, err = t.ParseGlob(fmt.Sprintf("templates/%s/include/*.gohtml", f))
 		if err != nil {
 			return fmt.Errorf("could not create include templates: %v", err)
 		}
