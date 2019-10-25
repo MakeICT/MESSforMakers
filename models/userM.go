@@ -28,14 +28,38 @@ type User struct {
 }
 
 //Get one user (need user ID populated)
-func (um *UserModel) Get(int) (*User, error) {
-	return nil, nil
+func (um *UserModel) Get(id int) (*User, error) {
+	if !(id > 0) {
+		return nil, fmt.Errorf("Did not recognize user id")
+	}
+	q := um.DB.Rebind("SELECT id, name, username, dob, phone FROM member WHERE id = ?")
+	user := &User{}
+	err := um.DB.Get(user, q, id)
+	if err != nil {
+		return nil, fmt.Errorf("Could not retrieve user: %v", err)
+	}
+	return user, nil
 }
 
 //GetAll returns "count" many users, starting "offset" users from the beginning
 func (um *UserModel) GetAll(count, page int, sortBy, direction string) ([]User, error) {
 	offset := (page - 1) * count //for page 1 the offset should be 0, etc.
-	q := um.DB.Rebind("SELECT id, name, username, dob, phone FROM member ORDER BY name LIMIT ? OFFSET ?")
+	q := um.DB.Rebind(`
+		SELECT 
+			id, 
+			name, 
+			username, 
+			dob, 
+			phone 
+		FROM 
+			member 
+		ORDER BY 
+			name 
+		LIMIT 
+			? 
+		OFFSET 
+		?
+	`)
 	rows, err := um.DB.Queryx(q, count, offset)
 	if err != nil {
 		return nil, err
