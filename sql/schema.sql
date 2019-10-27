@@ -142,6 +142,17 @@ CREATE TABLE login_log (
 );
 COMMENT ON TABLE login_log IS 'Keep track of member login for trouble shooting and usage data';
 
+CREATE TABLE session (
+	  id SERIAL PRIMARY KEY
+	, member_id INTEGER NOT NULL REFERENCES member(id) ON DELETE CASCADE
+	, authtoken VARCHAR(64) NOT NULL
+	, originated TIMESTAMP NOT NULL DEFAULT now()
+	, lastSeen TIMESTAMP NOT NULL DEFAULT now()
+	, lastIP VARCHAR(46) NOT NULL --46 characters will allow for storing ipv6 addresses or ipv4
+	, agent VARCHAR(100) NOT NULL
+);
+COMMENT ON TABLE session IS 'Keep track of user sessions, allow them to be deleted, expired, and investigated.';
+
 CREATE TABLE member_ice (
       id SERIAL PRIMARY KEY
 	, member_id INTEGER NOT NULL REFERENCES member(id) ON DELETE CASCADE
@@ -160,8 +171,6 @@ CREATE TABLE waivers (
 	, UNIQUE (filename)
 );
 COMMENT ON TABLE waivers IS 'Location and date for all member waivers to allow area and equipment access';
-
-
 
 CREATE TABLE addon_types (
 	id SERIAL PRIMARY KEY

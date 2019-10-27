@@ -17,10 +17,13 @@ import (
 // Users interface defines the methods that a Users model must fulfill. Allows mocking with a fake database for testing.
 type Users interface {
 	Get(int) (*models.User, error)
-	GetAll(int, int, string, string) ([]models.User, error)
+	GetAll(int, int, string, string) ([]*models.User, error)
 	Create(*models.User) error
 	Update(*models.User) error
 	Delete(*models.User) error
+	CheckPassword(string, string) (int, error)
+	OriginateSession(int) (string, error)
+	SessionLookup(int, string) (*models.User, error)
 }
 
 // Controller is a struct Struct to store pointer to cookiestore, database, and logger and any other things common to many controllers

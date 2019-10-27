@@ -9,7 +9,7 @@ import (
 	"unicode/utf8"
 )
 
-// EmailRegEx is a convenience provided for validating email addresses. Recommended by the W3C.
+// EmailRegEx is a convenience provided for validating email addresses. Using regex recommended by the W3C.
 var EmailRegEx = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 // PhoneRegEx is a convenience provided for validating phone numbers

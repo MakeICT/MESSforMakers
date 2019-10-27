@@ -11,10 +11,11 @@ import (
 
 func (a *application) appRouter() {
 
-	authMiddleware := authenticationMiddleware{cs, db}
+	//authMiddleware := authenticationMiddleware{a.Session, a.DB}
 
 	//middleware that should be called on every request get added to the chain here
-	c := alice.New(a.recoverPanic, a.securityHeaders, a.loggingHandler, a.Session.Enable)
+	standardChain := alice.New(a.recoverPanic, a.securityHeaders, a.loggingHandler)
+	authenticateChain := alice.New(a.Session.Enable, a.authenticationHandler)
 
 	router := mux.NewRouter()
 
@@ -23,19 +24,22 @@ func (a *application) appRouter() {
 	// Anything that does have the trailing slash may be a real request for an asset. Handle with the custom filesystem
 	router.PathPrefix("/assets/").Handler(fs)
 
+	router.Handle("/user", authenticateChain.ThenFunc(a.UserC.Show()))
+	router.Handle("/user", authenticateChain.ThenFunc(noRoute("none")))
+
 	//set all the routes here. Uses gorilla/mux so routes can use regex,
 	//and following with .Methods() allows for limiting them to only specific HTTP methods
 	router.HandleFunc("/", a.StaticC.Root())
 	router.HandleFunc("/signup", a.UserC.SignupForm()).Methods("GET")
-	router.HandleFunc("/signup", a.UserC.New()).Methods("POST")
+	router.HandleFunc("/signup", a.UserC.Signup()).Methods("POST")
 	router.HandleFunc("/login", a.UserC.LoginForm()).Methods("GET")
-	router.HandleFunc("/login", a.UserC.LoginUser()).Methods("POST")
+	router.HandleFunc("/login", a.UserC.Login()).Methods("POST")
 	router.HandleFunc("/logout", a.UserC.Logout()).Methods("POST")
-	router.HandleFunc("/user", noRoute("currently logged in user")).Methods("GET")
+	router.HandleFunc("/user", a.UserC.ShowCurrent()).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}", a.UserC.Show()).Methods("GET")
-	router.HandleFunc("/user/{id:[0-9]+}/edit", noRoute("form to edit user")).Methods("GET")
-	router.HandleFunc("/user/{id:[0-9]+}", noRoute("save user update to db")).Methods("POST").MatcherFunc(makeMatcher("patch"))
-	router.HandleFunc("/user/{id:[0-9]+}", noRoute("delete user")).Methods("POST").MatcherFunc(makeMatcher("delete"))
+	router.HandleFunc("/user/{id:[0-9]+}/edit", a.UserC.EditForm()).Methods("GET")
+	router.HandleFunc("/user/{id:[0-9]+}", a.UserC.Edit()).Methods("POST").MatcherFunc(makeMatcher("patch"))
+	router.HandleFunc("/user/{id:[0-9]+}", a.UserC.Delete()).Methods("POST").MatcherFunc(makeMatcher("delete"))
 	router.HandleFunc("/users", a.UserC.List()).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}/ice", noRoute("update ice")).Methods("POST").MatcherFunc(makeMatcher("patch"))
 	router.HandleFunc("/user/{id:[0-9]+}/ice", noRoute("delete ice")).Methods("POST").MatcherFunc(makeMatcher("delete"))
@@ -49,7 +53,7 @@ func (a *application) appRouter() {
 
 	//set the app router. Alice will pass all the requests through the middleware chain first,
 	//then to the functions defined above
-	a.Router = c.Then(router)
+	a.Router = standardChain.Then(router)
 }
 
 func makeMatcher(m string) func(*http.Request, *mux.RouteMatch) bool {

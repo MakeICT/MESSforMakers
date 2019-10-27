@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/golangcollege/sessions"
 	"github.com/gorilla/mux"
 
-	"github.com/golangcollege/sessions"
 	"github.com/makeict/MESSforMakers/models"
 	"github.com/makeict/MESSforMakers/util"
 	"github.com/makeict/MESSforMakers/views"
@@ -32,23 +32,6 @@ func (uc *UserController) Initialize(cfg *util.Config, um Users, l *util.Logger,
 	}
 
 	return nil
-}
-
-//SignupForm displays the signup form
-func (uc *UserController) SignupForm() func(http.ResponseWriter, *http.Request) {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		td, err := uc.DefaultData(r)
-		if err != nil {
-			http.Error(w, "could not generate default data", http.StatusInternalServerError)
-			return
-		}
-		td.Add("Form", util.NewForm(nil))
-
-		if err := uc.UserView.Render(w, r, "signup.gohtml", td); err != nil {
-			uc.serverError(w, err)
-			return
-		}
-	})
 }
 
 // List generates alist of all users to display. For admin purposes.
@@ -114,7 +97,6 @@ func (uc *UserController) Show() func(http.ResponseWriter, *http.Request) {
 		}
 
 		td.Add("User", user)
-		uc.Logger.Printf("user: %+v", user)
 
 		if err := uc.UserView.Render(w, r, "show.gohtml", td); err != nil {
 			uc.serverError(w, err)
@@ -123,8 +105,55 @@ func (uc *UserController) Show() func(http.ResponseWriter, *http.Request) {
 	})
 }
 
-//New saves a new user to the database
-func (uc *UserController) New() func(http.ResponseWriter, *http.Request) {
+//ShowCurrent gets the parameter from the url and gets the details for that user from the database
+func (uc *UserController) ShowCurrent() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		user, ok := r.Context().Value(1).(*models.User)
+
+		if !ok {
+			uc.clientError(w, http.StatusBadRequest)
+			return
+		}
+		user, err := uc.Users.Get(user.ID)
+		if err != nil {
+			uc.serverError(w, err)
+			return
+		}
+
+		td, err := uc.DefaultData(r)
+		if err != nil {
+			uc.serverError(w, err)
+		}
+
+		td.Add("User", user)
+
+		if err := uc.UserView.Render(w, r, "show.gohtml", td); err != nil {
+			uc.serverError(w, err)
+			return
+		}
+	})
+}
+
+//SignupForm displays the signup form
+func (uc *UserController) SignupForm() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		td, err := uc.DefaultData(r)
+		if err != nil {
+			http.Error(w, "could not generate default data", http.StatusInternalServerError)
+			return
+		}
+		td.Add("Form", util.NewForm(nil))
+
+		if err := uc.UserView.Render(w, r, "signup.gohtml", td); err != nil {
+			uc.serverError(w, err)
+			return
+		}
+	})
+}
+
+//Signup saves a new user to the database
+func (uc *UserController) Signup() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		r.ParseForm()
@@ -183,10 +212,10 @@ func (uc *UserController) New() func(http.ResponseWriter, *http.Request) {
 		}
 
 		u := &models.User{
-			Name:             r.FormValue("name"),
+			FirstName:        r.FormValue("name"),
 			Email:            r.FormValue("email"),
 			Password:         r.FormValue("password"),
-			DOB:              dob,
+			DOB:              &dob,
 			Phone:            r.FormValue("phone"),
 			TextOK:           r.FormValue("oktotext") == "on",
 			MembershipStatus: ms,
@@ -222,270 +251,100 @@ func (uc *UserController) New() func(http.ResponseWriter, *http.Request) {
 //LoginForm displays the log in form a
 func (uc *UserController) LoginForm() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "login form not implemented yet", http.StatusInternalServerError)
-		return
+
+		td, err := uc.DefaultData(r)
+		if err != nil {
+			uc.serverError(w, err)
+			return
+		}
+		td.Add("Form", util.NewForm(nil))
+		if err := uc.UserView.Render(w, r, "login.gohtml", td); err != nil {
+			uc.serverError(w, err)
+		}
+
 	})
 }
 
-//LoginUser performs a login
-func (uc *UserController) LoginUser() func(http.ResponseWriter, *http.Request) {
+//Login performs a login
+func (uc *UserController) Login() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "login user not implemented yet", http.StatusInternalServerError)
+
+		r.ParseForm()
+		form := util.NewForm(r.PostForm)
+		form.Required("username", "password")
+		if !form.Valid() {
+			td, err := uc.DefaultData(r)
+			td.Add("Form", form)
+			if err != nil {
+				uc.serverError(w, err)
+				return
+			}
+			if err := uc.UserView.Render(w, r, "login.gohtml", td); err != nil {
+				uc.serverError(w, err)
+				return
+			}
+		}
+
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+
+		id, err := uc.Users.CheckPassword(username, password)
+		if err != nil {
+			//TODO should differentiate between a bad password/username not recognized ans a database/server error
+			uc.serverError(w, err)
+			return
+		}
+
+		authKey, err := uc.Users.OriginateSession(id)
+		if err != nil {
+			uc.serverError(w, err)
+		}
+		uc.Session.Put(r, "user", id)
+		uc.Session.Put(r, "authKey", authKey)
+		uc.Session.Put(r, "flash", "Logged in!")
+
+		http.Redirect(w, r, fmt.Sprintf("http://%s:%d/", uc.AppConfig.App.Host, uc.AppConfig.App.Port), http.StatusSeeOther)
 		return
+
 	})
 }
 
 //Logout logs a user out
 func (uc *UserController) Logout() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//TODO unset the cookie, delete the session in the database
 		http.Error(w, "logout not implemented yet", http.StatusInternalServerError)
 		return
 	})
 }
 
-/**********************************************************/ //
-/*
-// Create() handles both the request to create, and the posting of the user details.
-// Renders the empty form, prefilled form with errors if the form doesn't validate, and redirects to the user's dashboard if the creation is successful.
-func (c *UserController) Create() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		if r.Method == "GET" {
-
-			// always need a body, even if it's empty. The template can check for empty fields, but not missing structs
-			body := Body{}
-
-			if err := views.User.New.Render(w, body); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-		} else if r.Method == "POST" {
-
-			//A user object can be passed around to contain and preserve partial form data that needs revision and error correction.
-			user := &models.User{}
-
-			//the model should not be handling things like errors and http. Send the model only the minimum necessary for parsing the form.
-			// TODO Refactor to get the http.Request out of the model
-			if err := user.ParseSignupForm(r, c.Decoder); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			//when the form has parsed, begin validating the data, and filling the form with whatever can be salvaged from an invalid submission.
-			// TODO the model should be returning better error messages, so that better decisions can be made based on WHY the validation failed.
-			if errMessages := user.ValidateUser(); errMessages != nil {
-				body := Body{
-					User:          user,
-					ErrorMessages: errMessages,
-				}
-				if err := views.User.New.Render(w, body); err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-				}
-				return
-			}
-
-			//only create the user in the database after all logic-level validation has passed. It's still possible to fail at this point
-			// because the database will enforce types.
-			//TODO since it can still fail at this point due to DB enforced rules, replace internal server error with a more friendly rendering of the signup form.
-			//Nil return only implies success, the existence of the user.ID is more important
-			if err := user.CreateUser(c.DB); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			//if the user is created successfully, there is nothing to render here, and it should show the user their new profile page.
-			//use StatusSeeOther for redirect.
-			http.Redirect(w, r, "/user/"+strconv.Itoa(user.ID), http.StatusSeeOther)
-		}
-	}
-}
-
-//Show a single user.
-func (c *UserController) Show() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		// the router will only call this function if there is a numeric ID number in the URL,
-		// but it will need to be converted from a string to an int.
-		// TODO if it can't convert from string to int, it should do something nicer then 500
-		id_string := mux.Vars(r)["id"]
-		id, err := strconv.Atoi(id_string)
+//EditForm displays the form for editing a user
+func (uc *UserController) EditForm() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		td, err := uc.DefaultData(r)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			uc.serverError(w, err)
 			return
 		}
-
-		//the model needs a user with a minimum of an ID to fetch the data to render the user's page
-		// TODO the model should return better errors, if the user is not found, the error should be 404 not 500
-		u := &models.User{ID: id}
-		if err := u.GetUser(c.DB); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err := uc.UserView.Render(w, r, "edit.gohtml", td); err != nil {
+			uc.serverError(w, err)
 			return
 		}
-
-		body := Body{User: u}
-
-		if err := views.User.Show.Render(w, body); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-	}
+	})
 }
 
-func (c *UserController) Edit() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		if r.Method == "GET" {
-
-			//TODO this code is repeated exactly from the Show() method and twice here, and will be in any method that requires the user's ID from the URL. DRY it.
-			id_string := mux.Vars(r)["id"]
-			id, err := strconv.Atoi(id_string)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			// In order to pre-fill the form, the user has to be retrieved.
-			u := &models.User{ID: id}
-			if err := u.GetUser(c.DB); err != nil {
-				// TODO again, if the user can't be retrieved, handle the error better and more politely.
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			body := Body{User: u}
-
-			if err := views.User.Edit.Render(w, body); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-		} else if r.Method == "POST" {
-
-			//A user object can be passed around to contain and preserve partial form data that needs revision and error correction.
-			id_string := mux.Vars(r)["id"]
-			id, err := strconv.Atoi(id_string)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			//the model should not be handling things like errors and http. Send the model only the minimum necessary for parsing the form.
-			user := &models.User{ID: id}
-			if err := user.ParseSignupForm(r, c.Decoder); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			//when the form has parsed, begin validating the data, and filling the form with whatever can be salvaged from an invalid submission.
-			if errMessages := user.ValidateUser(); errMessages != nil {
-				body := Body{
-					User:          user,
-					ErrorMessages: errMessages,
-				}
-				if err := views.User.Edit.Render(w, body); err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				return
-			}
-
-			//only update the user in the database after all logic-level validation has passed. It's still possible to fail at this point
-			// because the database will enforce types.
-			//TODO since it can still fail at this point, replace internal server error with a more friendly rendering of the signup form.
-			//Nil return only implies success, the existence of the user.ID is more important
-			if err := user.UpdateUser(c.DB); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			//use StatusSeeOther for redirect.
-			http.Redirect(w, r, "/user/"+strconv.Itoa(user.ID), http.StatusSeeOther)
-		}
-	}
+//Edit saves the changes to a user to the database
+func (uc *UserController) Edit() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "deleting users not implemented yet", http.StatusInternalServerError)
+		return
+	})
 }
 
-//Displays the form allowing the user to log in, and handles the form data and login procedure when the form is submitted.
-func (c *UserController) Login() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		var err error
-
-		if r.Method == "GET" {
-
-			body := Body{}
-
-			if err = views.User.Login.Render(w, body); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-		} else if r.Method == "POST" {
-
-			login := &models.Login{}
-
-			//get post data into login object
-			if err = login.ParseLoginForm(r, c.Decoder); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			//validate password "hash" for username
-			user := &models.User{}
-			if user, err = login.ValidateLogin(); err != nil {
-
-				//if the user comes back invalid for any reason, use the username from the submitted form, but nothing else
-				body := Body{
-					Login: &models.Login{
-						Username: login.Username,
-					},
-					ErrorMessages: &models.UserErrors{
-						Login: "Invalid username or password",
-					},
-				}
-
-				if err = views.User.Login.Render(w, body); err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-			}
-
-			//If everything comes back valid, set the cookie and start a session
-			if err = setLoginCookie(w, r, c, user); err != nil {
-				//TODO failed to log in. Should indicate that somehow.
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			//use StatusSeeOther for redirect.
-			// TODO this should ideally take the user back where they were before logging in, NOT directly back to the userpage
-			http.Redirect(w, r, "/user/"+strconv.Itoa(user.ID), http.StatusSeeOther)
-		}
-	}
+//Delete removes a user from the database
+func (uc *UserController) Delete() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "deleting users not implemented yet", http.StatusInternalServerError)
+		return
+	})
 }
-
-// this should set start a session in the database by generating an auth token and storing it, then setting a cookie with that auth token and the user's ID
-func setLoginCookie(w http.ResponseWriter, r *http.Request, c *UserController, u *models.User) error {
-
-	// originate session
-	// method needs to generate an auth token, store the token in the DB with the user ID and return the token and an error
-	authToken, err := u.OriginateSession(c.DB)
-	if err != nil {
-		return err
-	}
-	//if there is no error,
-	session, err := c.CookieStore.Store.Get(r, "mess-data")
-	if err != nil {
-		return err
-	}
-
-	session.Values["userid"] = u.ID
-	session.Values["authtoken"] = authToken
-
-	if err = session.Save(r, w); err != nil {
-		return err
-	}
-
-	return nil
-}
-*/

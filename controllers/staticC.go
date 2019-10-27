@@ -40,7 +40,7 @@ func (sc *StaticController) Root() func(http.ResponseWriter, *http.Request) {
 		}
 
 		td.AuthUser = &models.User{
-			Name: "user name",
+			FirstName: "user name",
 		}
 
 		td.CSRFToken = "csrftoken"

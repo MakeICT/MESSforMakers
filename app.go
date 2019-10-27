@@ -1,10 +1,8 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
-	"net/http/httputil"
 	"time"
 
 	"github.com/golangcollege/sessions"
@@ -69,80 +67,4 @@ func newApplication(config *util.Config) (*application, error) {
 	app.appRouter()
 
 	return &app, nil
-}
-
-//Middleware
-type loggingMiddleware struct {
-	dumpRequest bool
-	logger      *util.Logger
-}
-
-func (l *loggingMiddleware) loggingHandler(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		t1 := time.Now()
-
-		if l.dumpRequest {
-			if reqDump, err := httputil.DumpRequest(r, true); err == nil {
-				l.logger.Printf("Recieved Request:\n%s\n", reqDump)
-			}
-		}
-
-		h.ServeHTTP(w, r)
-
-		t2 := time.Now()
-
-		l.logger.Printf("[%s] %s %v\n", r.Method, r.URL.String(), t2.Sub(t1))
-	})
-}
-
-type authenticationMiddleware struct {
-	CookieStore *sessions.CookieStore
-	DB          *sqlx.DB
-}
-
-type contextKey int
-
-const contextkeyUser contextKey = 1
-
-func (a *authenticationMiddleware) authenticationHandler(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		//check if cookie exists
-		s, err := a.CookieStore.Store.Get(r, "mess-data")
-
-		if err == nil && !s.IsNew { //if the session is not new, then it can look for the user ID and auth key
-
-			id := s.Values["userID"].(string)
-			auth := s.Values["authToken"].(string)
-
-			//if it exists, check user ID and token for validity.
-			if id != "" && auth != "" {
-
-				user, err := models.SessionLookup(a.DB, id, auth)
-
-				//if username and token are valid, store the username, id, and (later) rbac role in the context for use by later handlers
-				if err == nil {
-					user.Authorized = true
-					// context key should be a custom type and a const NOT a string
-					ctx := context.WithValue(r.Context(), contextkeyUser, user)
-
-					// TODO if the user is authorized, the LastSeenTime of the session should be updated
-
-					h.ServeHTTP(w, r.WithContext(ctx))
-					return
-				} else if err == models.ErrNotAuthorized {
-					// user is either not allowed to log in, or the access token is expired.
-					// is there a distinction? Always redirect to login form after setting a flash?
-					http.Error(w, err.Error(), http.StatusUnauthorized)
-					return
-				} else {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-			}
-		}
-
-		h.ServeHTTP(w, r)
-
-	})
 }
