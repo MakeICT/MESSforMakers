@@ -248,7 +248,7 @@ func (uc *UserController) Signup() func(http.ResponseWriter, *http.Request) {
 	})
 }
 
-//LoginForm displays the log in form a
+//LoginForm displays the log in form
 func (uc *UserController) LoginForm() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -295,6 +295,7 @@ func (uc *UserController) Login() func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
+		//TODO need to pass the IP and agent to originate session
 		authKey, err := uc.Users.OriginateSession(id)
 		if err != nil {
 			uc.serverError(w, err)
@@ -302,6 +303,8 @@ func (uc *UserController) Login() func(http.ResponseWriter, *http.Request) {
 		uc.Session.Put(r, "user", id)
 		uc.Session.Put(r, "authKey", authKey)
 		uc.Session.Put(r, "flash", "Logged in!")
+
+		//TODO need to log the login attempt to the login table
 
 		http.Redirect(w, r, fmt.Sprintf("http://%s:%d/", uc.AppConfig.App.Host, uc.AppConfig.App.Port), http.StatusSeeOther)
 		return

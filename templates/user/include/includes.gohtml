@@ -153,3 +153,30 @@
 {{end}}    
 </form>
 {{end}}
+
+{{define "login_form"}}
+    <div class="row">
+      <div class="col s6">
+        <div class="input-field ">
+          {{if .ErrorMessages.Username}}<p class="red-text text-darken-3">{{.ErrorMessages.Username}}</p>{{end}}
+          <input id="username" name="username" type="text" class="validate" {{if .Login.Username}}value="{{.Login.Username}}"{{end}}>
+          <label for="username">Username</label>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="input-field col s6">
+        <input id="password" name="password" type="text" class="validate" {{if .Login.Password}}value="{{.Login.Password}}"{{end}}>
+        <label for="password">Password</label>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col s12 m3" >
+        <input id="remember" name="remember" type="checkbox" {{if .Login.Remember}}checked{{end}}>
+        <label for="Remember" >Remember Me</label>
+      </div>
+    </div>
+    <div class="row">
+      <a href="forgotpassword">Forgot Password?</a>
+    </div>
+{{end}}

@@ -1,10 +1,14 @@
-{{ define "meta-head" }}
-    <title>MakeICT | Sign Up</title>
-{{ end }}
+{{template "site_default" .}}
 
-{{ define "content" }}
+{{define "page_header"}}
+{{- end}}
+
+{{define "page_nav"}}
+{{- end}}
+
+{{define "page_content"}}
   <div class="row">
-    <h4>Register for MakeICT</h4>
+    <h4>Log In</h4>
     <form class="col s12" method="POST" action="/login">
       {{template "login_form" .}}
       <div class="row">
@@ -16,3 +20,6 @@
   </div>
 
 {{ end }}
+
+{{define "page_footer"}}
+{{- end}}

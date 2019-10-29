@@ -49,7 +49,6 @@ func (c *Controller) setup(cfg *util.Config, um Users, l *util.Logger, s *sessio
 func (c *Controller) DefaultData(r *http.Request) (*views.TemplateData, error) {
 	td := &views.TemplateData{}
 	td.Root = fmt.Sprintf("http://%s:%d/", c.AppConfig.App.Host, c.AppConfig.App.Port)
-	c.Logger.Printf("Added root path: %s", td.Root)
 	td.Flash = c.Session.PopString(r, "flash")
 	return td, nil
 }

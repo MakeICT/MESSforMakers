@@ -14,8 +14,8 @@ func (a *application) appRouter() {
 	//authMiddleware := authenticationMiddleware{a.Session, a.DB}
 
 	//middleware that should be called on every request get added to the chain here
-	standardChain := alice.New(a.recoverPanic, a.securityHeaders, a.loggingHandler)
-	authenticateChain := alice.New(a.Session.Enable, a.authenticationHandler)
+	standardChain := alice.New(a.recoverPanic, a.securityHeaders, a.loggingHandler, a.Session.Enable)
+	//authenticateChain := alice.New(a.Session.Enable, a.authenticationHandler)
 
 	router := mux.NewRouter()
 
@@ -23,9 +23,6 @@ func (a *application) appRouter() {
 	// Ending the URL path with no trailing slash looks like it should be a route to a resource, but it's not. Return 404.
 	// Anything that does have the trailing slash may be a real request for an asset. Handle with the custom filesystem
 	router.PathPrefix("/assets/").Handler(fs)
-
-	router.Handle("/user", authenticateChain.ThenFunc(a.UserC.Show()))
-	router.Handle("/user", authenticateChain.ThenFunc(noRoute("none")))
 
 	//set all the routes here. Uses gorilla/mux so routes can use regex,
 	//and following with .Methods() allows for limiting them to only specific HTTP methods
