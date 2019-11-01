@@ -1,4 +1,4 @@
-package main
+package util
 
 import (
 	"encoding/json"
@@ -19,7 +19,8 @@ type Config struct {
 		DumpRequest bool `json:"dump_request"`
 	} `json:"logger_settings"`
 	App struct {
-		Port int `json:"port"`
+		Host string `json:"host"`
+		Port int    `json:"port"`
 	} `json:"app_settings"`
 }
 

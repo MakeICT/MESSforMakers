@@ -1,74 +1,69 @@
-/*
- MESS for Makers - An open source member and event management platform
-    Copyright (C) 2017  Sam Schurter
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+// Package controllers provides handlers that can be mapped to routes and defines interfaces that define
+// what is required by the handlers.
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"runtime/debug"
 
+	"github.com/golangcollege/sessions"
+
+	"github.com/makeict/MESSforMakers/models"
+	"github.com/makeict/MESSforMakers/util"
 	"github.com/makeict/MESSforMakers/views"
 )
 
-type Controller struct{}
-
-//this file for defining methods common to all controllers
-
-func NotImplementedController() Controller {
-	return Controller{}
+// Users interface defines the methods that a Users model must fulfill. Allows mocking with a fake database for testing.
+type Users interface {
+	Get(int) (*models.User, error)
+	GetAll(int, int, string, string) ([]*models.User, error)
+	Create(*models.User) error
+	Update(*models.User) error
+	Delete(*models.User) error
+	CheckPassword(string, string) (int, error)
+	OriginateSession(int) (string, error)
+	SessionLookup(int, string) (*models.User, error)
 }
 
-func (c *Controller) None(route string) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-		body := "This route has not been implemented yet: " + route
-
-		if err := views.ErrorPage.Index.Render(w, body); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	}
+// Controller is a struct Struct to store pointer to cookiestore, database, and logger and any other things common to many controllers
+type Controller struct {
+	Users     Users
+	Logger    *util.Logger
+	AppConfig *util.Config
+	Session   *sessions.Session
 }
 
-func StaticController() Controller {
-	return Controller{}
+// method to create a new struct and store the information from the app, passed as args
+// Requiring the information passed as args avoids imports loop
+// the general controller constructor will be called by the specific controller constructors
+// the specific controller constructors can then initialize and embed their own templates.
+func (c *Controller) setup(cfg *util.Config, um Users, l *util.Logger, s *sessions.Session) {
+	c.Users = um
+	c.Logger = l
+	c.AppConfig = cfg
+	c.Session = s
 }
 
-func (c *Controller) Root() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		body := "root!"
-		if err := views.StaticPage.Index.Render(w, body); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	}
+// DefaultData ia the method to generate required default template data and return template object
+func (c *Controller) DefaultData(r *http.Request) (*views.TemplateData, error) {
+	td := &views.TemplateData{}
+	td.Root = fmt.Sprintf("http://%s:%d/", c.AppConfig.App.Host, c.AppConfig.App.Port)
+	td.Flash = c.Session.PopString(r, "flash")
+	return td, nil
 }
 
-func (c *Controller) Join() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		body := "join!"
-		if err := views.StaticPage.Join.Render(w, body); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	}
+func (c *Controller) serverError(w http.ResponseWriter, err error) {
+	trace := fmt.Sprintf("%s\n%s", err.Error(), debug.Stack())
+	c.Logger.Output(2, trace)
+
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
-func (c *Controller) Reservations() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		body := "reserve!"
-		if err := views.StaticPage.Reserve.Render(w, body); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	}
+func (c *Controller) clientError(w http.ResponseWriter, status int) {
+	http.Error(w, http.StatusText(status), status)
+}
+
+func (c *Controller) notFound(w http.ResponseWriter) {
+	c.clientError(w, http.StatusNotFound)
 }

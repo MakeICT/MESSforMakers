@@ -1,8 +1,3 @@
---
-
--- This command must be run as superuser once per database:
-CREATE EXTENSION btree_gist;
-
 --------------------------------------------------------------------------------------------------------------------------------
 -- Tables need for control of member in the site
 --------------------------------------------------------------------------------------------------------------------------------
@@ -110,6 +105,19 @@ CREATE TABLE member (
 );
 COMMENT ON TABLE member IS 'Core table of all members and guests';
 
+CREATE TABLE member_address (
+	id SERIAL PRIMARY KEY
+	, member_id INTEGER NOT NULL REFERENCES member(id) ON DELETE CASCADE
+	, addr_type TEXT NOT NULL --home or billing
+	, addr1 TEXT NOT NULL
+	, addr2 TEXT
+	, city TEXT NOT NULL
+	, state TEXT NOT NULL
+	, zip TEXT NOT NULL
+	, UNIQUE(member_id, addr_type)
+);
+COMMENT ON TABLE member_address IS 'Home and billing addresses for members and guests';
+
 CREATE TABLE member_access_token (
       id SERIAL PRIMARY KEY
 	, member_id INTEGER NOT NULL REFERENCES member(id) ON DELETE CASCADE
@@ -134,6 +142,17 @@ CREATE TABLE login_log (
 );
 COMMENT ON TABLE login_log IS 'Keep track of member login for trouble shooting and usage data';
 
+CREATE TABLE session (
+	  id SERIAL PRIMARY KEY
+	, member_id INTEGER NOT NULL REFERENCES member(id) ON DELETE CASCADE
+	, authtoken VARCHAR(64) NOT NULL
+	, originated TIMESTAMP NOT NULL DEFAULT now()
+	, lastSeen TIMESTAMP NOT NULL DEFAULT now()
+	, lastIP VARCHAR(46) NOT NULL --46 characters will allow for storing ipv6 addresses or ipv4
+	, agent VARCHAR(100) NOT NULL
+);
+COMMENT ON TABLE session IS 'Keep track of user sessions, allow them to be deleted, expired, and investigated.';
+
 CREATE TABLE member_ice (
       id SERIAL PRIMARY KEY
 	, member_id INTEGER NOT NULL REFERENCES member(id) ON DELETE CASCADE
@@ -152,8 +171,6 @@ CREATE TABLE waivers (
 	, UNIQUE (filename)
 );
 COMMENT ON TABLE waivers IS 'Location and date for all member waivers to allow area and equipment access';
-
-
 
 CREATE TABLE addon_types (
 	id SERIAL PRIMARY KEY

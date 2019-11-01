@@ -1,0 +1,27 @@
+{{template "site_default" . }}
+
+{{define "page_content"}}
+<p>Flash Message: {{.Flash}}<p>
+    <table>
+        <tr>
+            <th>Name</th>
+        </tr>
+        {{range .Data.Users}}
+            <tr>
+                <td>{{.Name}}</td>
+                <td>{{.Email}}</td>
+                <td>{{.DOB}}</td>
+                <td>{{.Phone}}</td>
+            </tr>
+        {{end}}
+    </table>
+{{end}}
+
+{{define "page_header"}}
+{{end}}
+
+{{define "page_nav"}}
+{{end}}
+
+{{define "page_footer"}}
+{{end}}

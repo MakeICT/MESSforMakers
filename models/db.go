@@ -4,7 +4,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-//initialize db
+//InitDB connects to the database and checks the connection
 func InitDB(dataSourceName string) (*sqlx.DB, error) {
 
 	//open returns no error as no connection is made until needed
@@ -16,10 +16,4 @@ func InitDB(dataSourceName string) (*sqlx.DB, error) {
 	}
 
 	return db, nil
-}
-
-func SessionLookup(db *sqlx.DB, id string, auth string) (User, error) {
-
-	return User{}, nil
-
 }
