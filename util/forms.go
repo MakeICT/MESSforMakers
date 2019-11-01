@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
@@ -25,11 +26,7 @@ func (e formErrors) Get(f string) string {
 	if len(es) == 0 {
 		return ""
 	}
-	retString := ""
-	for _, v := range es {
-		retString = fmt.Sprintf("%s; %s", retString, v)
-	}
-	return retString
+	return strings.Join(es, "; ")
 }
 
 // Form will hold the form values to be validated and any Errors generated.
@@ -127,7 +124,7 @@ func (f *Form) MatchField(field, match string) {
 		return
 	}
 	if value1 != value2 {
-		f.Errors.Add(field, "Values must match")
+		f.Errors.Add(match, "Values must match")
 	}
 }
 
@@ -135,4 +132,13 @@ func (f *Form) MatchField(field, match string) {
 // Will return true if there are no Errors on the form.
 func (f *Form) Valid() bool {
 	return len(f.Errors) == 0
+}
+
+//IntOK returns an int and an OK flag if the string can be converted to an int between max and min inclusive
+func IntOK(val string, min, max int) (int, bool) {
+	n, err := strconv.Atoi(val)
+	if err != nil || n < min || n > max {
+		return 0, false
+	}
+	return n, true
 }

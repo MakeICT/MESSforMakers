@@ -12,7 +12,7 @@ import (
 func (a *application) appRouter() {
 
 	//middleware that should be called on every request get added to the chain here
-	c := alice.New(a.recoverPanic, a.loggingHandler, a.secureHeaders)
+	c := alice.New(a.recoverPanic, a.securityHeaders, a.loggingHandler, a.Session.Enable)
 
 	router := mux.NewRouter()
 
@@ -25,15 +25,16 @@ func (a *application) appRouter() {
 	//and following with .Methods() allows for limiting them to only specific HTTP methods
 	router.HandleFunc("/", a.StaticC.Root())
 	router.HandleFunc("/signup", a.UserC.SignupForm()).Methods("GET")
-	router.HandleFunc("/signup", a.UserC.NewUser()).Methods("POST")
+	router.HandleFunc("/signup", a.UserC.New()).Methods("POST")
 	router.HandleFunc("/login", a.UserC.LoginForm()).Methods("GET")
 	router.HandleFunc("/login", a.UserC.LoginUser()).Methods("POST")
 	router.HandleFunc("/logout", a.UserC.Logout()).Methods("POST")
-	router.HandleFunc("/user/{id:[0-9]+}", noRoute("show specific user")).Methods("GET")
+	router.HandleFunc("/user", noRoute("currently logged in user")).Methods("GET")
+	router.HandleFunc("/user/{id:[0-9]+}", a.UserC.Show()).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}/edit", noRoute("form to edit user")).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}", noRoute("save user update to db")).Methods("POST").MatcherFunc(makeMatcher("patch"))
 	router.HandleFunc("/user/{id:[0-9]+}", noRoute("delete user")).Methods("POST").MatcherFunc(makeMatcher("delete"))
-	router.HandleFunc("/users", noRoute("users")).Methods("GET")
+	router.HandleFunc("/users", a.UserC.List()).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}/ice", noRoute("update ice")).Methods("POST").MatcherFunc(makeMatcher("patch"))
 	router.HandleFunc("/user/{id:[0-9]+}/ice", noRoute("delete ice")).Methods("POST").MatcherFunc(makeMatcher("delete"))
 	router.HandleFunc("/user/{id:[0-9]+}/uploadwaiver", noRoute("uploadwaiver")).Methods("GET")
