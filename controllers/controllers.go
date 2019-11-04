@@ -22,7 +22,7 @@ type Users interface {
 	Update(*models.User) error
 	Delete(*models.User) error
 	CheckPassword(string, string) (int, error)
-	OriginateSession(int) (string, error)
+	SessionOriginate(int) (string, error)
 	SessionLookup(int, string) (*models.User, error)
 }
 

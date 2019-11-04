@@ -285,26 +285,27 @@ func (uc *UserController) Login() func(http.ResponseWriter, *http.Request) {
 			}
 		}
 
-		username := r.FormValue("username")
-		password := r.FormValue("password")
-
-		id, err := uc.Users.CheckPassword(username, password)
-		if err != nil {
-			//TODO should differentiate between a bad password/username not recognized ans a database/server error
+		//TODO need to log the login attempt to the login table
+		id, authKey, err := uc.Users.Login(r.FormValue("username"), r.FormValue("password"), r.RemoteAddr, r.UserAgent())
+		if err == models.ErrBadUsernamePassword {
+			td, err := uc.DefaultData(r)
+			if err != nil {
+				uc.serverError(w, err)
+				return
+			}
+			td.Add("Form", form)
+			if err := uc.UserView.Render(w, r, "login.gohtml", td); err != nil {
+				uc.serverError(w, err)
+				return
+			}
+		} else if err != nil {
 			uc.serverError(w, err)
 			return
 		}
 
-		//TODO need to pass the IP and agent to originate session
-		authKey, err := uc.Users.OriginateSession(id)
-		if err != nil {
-			uc.serverError(w, err)
-		}
 		uc.Session.Put(r, "user", id)
 		uc.Session.Put(r, "authKey", authKey)
 		uc.Session.Put(r, "flash", "Logged in!")
-
-		//TODO need to log the login attempt to the login table
 
 		http.Redirect(w, r, fmt.Sprintf("http://%s:%d/", uc.AppConfig.App.Host, uc.AppConfig.App.Port), http.StatusSeeOther)
 		return
