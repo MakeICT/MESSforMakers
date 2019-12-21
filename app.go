@@ -49,6 +49,7 @@ func newApplication(config *util.Config) (*application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error initializing database :: %v", err)
 	}
+	//TODO this secret should probably come from the config
 	session := sessions.New([]byte("H97LwY3g5X5W0AJjdw4yEIZCIasiU2FRg"))
 	session.Lifetime = 12 * time.Hour
 	app.Session = session
