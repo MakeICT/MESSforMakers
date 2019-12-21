@@ -57,6 +57,7 @@ func (uc *UserController) List() func(http.ResponseWriter, *http.Request) {
 			}
 		}
 
+		//TODO implement sort direction
 		users, err := uc.Users.GetAll(20, page, sort, "asc")
 		if err != nil {
 			uc.serverError(w, err)
@@ -159,13 +160,14 @@ func (uc *UserController) Signup() func(http.ResponseWriter, *http.Request) {
 		r.ParseForm()
 		form := util.NewForm(r.PostForm)
 
-		form.Required("name", "email", "email2", "password", "password2", "dob.mm", "dob.dd", "dob.yyyy", "phone")
+		form.Required("firstname", "lastname", "email", "email2", "password", "password2", "dob.mm", "dob.dd", "dob.yyyy", "phone")
 		form.RequiredIf("membershipoption", r.FormValue("membersignup") == "on")
 		form.PermittedValues("membershipoption", "1", "2", "3", "4", "5", "6")
 		form.MatchField("email", "email2")
 		form.MatchField("password", "password2")
 		form.MinLength("password", 4)
-		form.MaxLength("name", 255)
+		form.MaxLength("firstname", 255)
+		form.MaxLength("lastname", 255)
 		form.MaxLength("email", 255)
 		form.MaxLength("phone", 15)
 		form.MatchPattern("email", util.EmailRegEx)
@@ -212,7 +214,8 @@ func (uc *UserController) Signup() func(http.ResponseWriter, *http.Request) {
 		}
 
 		u := &models.User{
-			FirstName:        r.FormValue("name"),
+			FirstName:        r.FormValue("firstname"),
+			LastName:         r.FormValue("lastname"),
 			Email:            r.FormValue("email"),
 			Password:         r.FormValue("password"),
 			DOB:              &dob,
@@ -285,7 +288,6 @@ func (uc *UserController) Login() func(http.ResponseWriter, *http.Request) {
 			}
 		}
 
-		//TODO need to log the login attempt to the login table
 		id, authKey, err := uc.Users.Login(r.FormValue("username"), r.FormValue("password"), r.RemoteAddr, r.UserAgent())
 		if err == models.ErrBadUsernamePassword {
 			td, err := uc.DefaultData(r)
@@ -294,10 +296,12 @@ func (uc *UserController) Login() func(http.ResponseWriter, *http.Request) {
 				return
 			}
 			td.Add("Form", form)
+			td.Flash = "Bad username or password"
 			if err := uc.UserView.Render(w, r, "login.gohtml", td); err != nil {
 				uc.serverError(w, err)
 				return
 			}
+			return
 		} else if err != nil {
 			uc.serverError(w, err)
 			return
@@ -340,7 +344,7 @@ func (uc *UserController) EditForm() func(http.ResponseWriter, *http.Request) {
 //Edit saves the changes to a user to the database
 func (uc *UserController) Edit() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "deleting users not implemented yet", http.StatusInternalServerError)
+		http.Error(w, "editing users not implemented yet", http.StatusInternalServerError)
 		return
 	})
 }

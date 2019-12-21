@@ -60,17 +60,18 @@ func (a *application) authenticationHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		//check if cookie exists
-		if a.Session.Exists(r, "userID") && a.Session.Exists(r, "authToken") {
+		if a.Session.Exists(r, "user") && a.Session.Exists(r, "authKey") {
 
-			idStr := a.Session.GetString(r, "userID")
-			auth := a.Session.GetString(r, "authToken")
+			idStr := a.Session.GetString(r, "user")
+			auth := a.Session.GetString(r, "authKey")
 
 			//if it exists, check user ID and token for validity.
 			if idStr != "" && auth != "" {
 
 				id, err := strconv.Atoi(idStr)
 				if err != nil {
-					a.Session.Remove(r, "userID")
+					a.Session.Remove(r, "user")
+					a.Session.Remove(r, "authKey")
 					h.ServeHTTP(w, r)
 					return
 				}
@@ -90,7 +91,8 @@ func (a *application) authenticationHandler(h http.Handler) http.Handler {
 				} else if err == models.ErrNoRecord {
 					// user is either not logged in, doesn't exist, or session has expired.
 					// Remove the user id from the session and proceed as if there is no user logged in.
-					a.Session.Remove(r, "userID")
+					a.Session.Remove(r, "user")
+					a.Session.Remove(r, "authKey")
 					h.ServeHTTP(w, r)
 					return
 				} else {

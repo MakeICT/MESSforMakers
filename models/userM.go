@@ -2,12 +2,14 @@ package models
 
 import (
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Address is to nest an address and keep the User struct cleaner, can also be reused elsewhere
@@ -49,7 +51,6 @@ type User struct {
 }
 
 //ErrNotAuthorized is used when the user is not authorized to perform the requested action
-// TODO Fill out this list. review all error handling in app and controller
 var ErrNotAuthorized = errors.New("authorization failed")
 
 //ErrNoRecord is returned when there are no records to return, but a record is required.
@@ -69,7 +70,7 @@ func (um *UserModel) Get(id int) (*User, error) {
 	if !(id > 0) {
 		return nil, fmt.Errorf("Did not recognize user id")
 	}
-	q := um.DB.Rebind("SELECT id, name, username, dob, phone FROM member WHERE id = ?")
+	q := um.DB.Rebind("SELECT id, first_name, last_name, username, dob, phone FROM member WHERE id = ?")
 	user := &User{}
 	err := um.DB.Get(user, q, id)
 	if err != nil {
@@ -80,18 +81,20 @@ func (um *UserModel) Get(id int) (*User, error) {
 
 //GetAll returns "count" many users, starting "offset" users from the beginning
 func (um *UserModel) GetAll(count, page int, sortBy, direction string) ([]*User, error) {
+
+	//TODO implement sort by and direction
 	offset := (page - 1) * count //for page 1 the offset should be 0, etc.
 	q := um.DB.Rebind(`
 		SELECT 
 			id, 
-			name, 
+			first_name, last_name, 
 			username, 
 			dob, 
 			phone 
 		FROM 
 			member 
 		ORDER BY 
-			name 
+			last_name 
 		LIMIT 
 			? 
 		OFFSET 
@@ -121,8 +124,6 @@ func (um *UserModel) Create(u *User) error {
 	var guestStatus int
 	var guestRole int
 
-	//TODO sanitize strings to prevent SQL injection
-
 	//Fetch the ID for guest status from DB
 	q = "SELECT id FROM membership_status WHERE name = 'guest'"
 	um.DB.Get(&guestStatus, q)
@@ -134,18 +135,25 @@ func (um *UserModel) Create(u *User) error {
 	//TODO calculate membership_expires
 	q = um.DB.Rebind(`
 	INSERT INTO member 
-		(name, username, password, dob, phone, membership_status_id, rbac_role_id, created_at, updated_at)
+		(first_name, last_name, username, password, dob, phone, membership_status_id, rbac_role_id, created_at, updated_at)
 	VALUES
-	(?, ?, ?, ?, ?, ?, ?, ?, ?)
+	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	RETURNING id`)
 	var id int
-	fmt.Printf("%+v\n", u)
-	err := um.DB.Get(
+
+	//TODO make the cost a config variable
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), 12)
+	if err != nil {
+		return err
+	}
+
+	err = um.DB.Get(
 		&id,
 		q,
 		u.FirstName,
+		u.LastName,
 		u.Email,
-		u.Password,
+		hashedPassword,
 		u.DOB,
 		u.Phone,
 		u.MembershipStatus,
@@ -170,28 +178,49 @@ func (um *UserModel) Delete(*User) error {
 	return nil
 }
 
-// SessionOriginate takes a user ID and starts a session by creating an authkey and storing that in the session table,
+// Login takes a username and password and starts a session by creating an authkey and storing that in the session table,
 // then returning that key to be used in the session cookie
-func (um *UserModel) SessionOriginate(id int) (string, error) {
+func (um *UserModel) Login(u, p, ip, ua string) (int, string, error) {
+
+	query := "SELECT id, password FROM member WHERE username = $1"
+	var id int
+	var password []byte
+	err := um.DB.QueryRowx(query, u, p).Scan(&id, &password)
+	if err == sql.ErrNoRows {
+		//TODO log attempt to log in with bad username
+		return 0, "", ErrBadUsernamePassword
+	} else if err != nil {
+		return 0, "", err
+	}
+
+	//TODO check password
+	err = bcrypt.CompareHashAndPassword(password, []byte(p))
+	if err == bcrypt.ErrMismatchedHashAndPassword {
+		//TODO log attempt to log in with bad password
+		return 0, "", ErrBadUsernamePassword
+	} else if err != nil {
+		return 0, "", err
+	}
+
 	//generate crypto random key
 	key, err := generateKey(32)
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 
 	//store key in database
-	query := "INSERT INTO session (userid, authtoken, loginDate, lastSeenDate) VALUES ($1, $2, $3, $4)"
+	query = "INSERT INTO session (userid, authtoken, loginDate, lastSeenDate) VALUES ($1, $2, $3, $4)"
 
-	//TODO check that the user exists first?
 	//TODO make the fields datetime not date
+	//TODO make these time.Now() instead
 	_, err = um.DB.Exec(query, id, key, "1-1-1970", "1-1-1970")
 
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 
-	//return key
-	return key, nil
+	//return user id and auth key
+	return id, key, nil
 }
 
 // SessionLookup searches for a session in the database, and makes sure that it's not deleted or expired.
@@ -203,7 +232,7 @@ func (um *UserModel) SessionLookup(id int, auth string) (*User, error) {
 }
 
 //CheckPassword returns true only if the password matches the stored password for the user
-func (um *UserModel) CheckPassword(username, password string) (int, error) {
+func (um *UserModel) checkPassword(username, password string) (int, error) {
 	return 1, nil
 }
 

@@ -13,27 +13,27 @@
   <div class="row">
     <div class="col s3 m2">
       <p>First Name</p>
-      <p>{{if .Person.FirstName}}{{.Person.FirstName}}{{end}}</p>
+      <p>{{if .Data.User.FirstName}}{{.Data.User.FirstName}}{{end}}</p>
     </div>
     <div class="col s3 m2">
       <p>Last Name</p>
-      <p>{{if .Person.LastName}}{{.Person.LastName}}{{end}}
+      <p>{{if .Data.User.LastName}}{{.Data.User.LastName}}{{end}}
     </div>
     <div class="col s3 m2">
       <p>Phone</p>
-      <p>{{if .Person.Phone}}{{.Person.Phone}}{{end}}</p>
+      <p>{{if .Data.User.Phone}}{{.Data.User.Phone}}{{end}}</p>
     </div>
     <div class="col s3 m2">
       <p>Email</p>
-        <p>{{if .Person.Email}}{{.Person.Email}}{{end}}</p>
+        <p>{{if .Data.User.Email}}{{.Data.User.Email}}{{end}}</p>
     </div>
     <div class="col s3 m2">
       <p>Password</p>
-      <p>{{if .Person.Password}}{{.Person.Password}}{{end}}</p>
+      <p>{{if .Data.User.Password}}{{.Data.User.Password}}{{end}}</p>
     </div>
   </div>
   <div class="row">
-    <a href="/user/{{.Person.ID}}/edit" class="waves-effect waves-light btn">Edit Profile</a>
+    <a href="/user/{{.Data.User.ID}}/edit" class="waves-effect waves-light btn">Edit Profile</a>
   </div>
   <div class="row">
     <div class="col s8 offset-s2 m4 offset-m2">

@@ -20,9 +20,15 @@
                 <span class="error">{{.}}</span>
             {{end}}
             <div class="row">
-                <div class="col s12 input-field">
-                    <input placeholder="Name" type="text"  id="name" name="name" class="text-input" value="{{.Get "name"}}">
-                    {{with .Errors.Get "name"}}
+                <div class="col s6 input-field">
+                    <input placeholder="First Name" type="text"  id="firstname" name="firstname" class="text-input" value="{{.Get "firstname"}}">
+                    {{with .Errors.Get "firstname"}}
+                        <span class="error">{{.}}</span>
+                    {{end}}
+                </div>
+                <div class="col s6 input-field">
+                    <input placeholder="Last Name" type="text"  id="lastname" name="lastname" class="text-input" value="{{.Get "lastname"}}">
+                    {{with .Errors.Get "lastname"}}
                         <span class="error">{{.}}</span>
                     {{end}}
                 </div>

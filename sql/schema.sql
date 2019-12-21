@@ -140,7 +140,7 @@ CREATE TABLE login_log (
     , login_status_id INTEGER NOT NULL REFERENCES login_status(id) ON DELETE RESTRICT
     , created_at TIMESTAMP NOT NULL DEFAULT now()
 );
-COMMENT ON TABLE login_log IS 'Keep track of member login for trouble shooting and usage data';
+COMMENT ON TABLE login_log IS 'Keep track of member login attempts for troubleshooting and usage data';
 
 CREATE TABLE session (
 	  id SERIAL PRIMARY KEY

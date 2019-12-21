@@ -21,8 +21,7 @@ type Users interface {
 	Create(*models.User) error
 	Update(*models.User) error
 	Delete(*models.User) error
-	CheckPassword(string, string) (int, error)
-	SessionOriginate(int) (string, error)
+	Login(string, string, string, string) (int, string, error)
 	SessionLookup(int, string) (*models.User, error)
 }
 
