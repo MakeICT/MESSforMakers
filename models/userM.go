@@ -30,10 +30,10 @@ type Ice struct {
 
 // User holds all the details about a single person
 type User struct {
-	ID               int    `db:"id"`
-	FirstName        string `schema:"firstname" db:"first_name"`
-	LastName         string `schema:"lastname" db:"last_name"`
-	Address          Address
+	ID               int        `db:"id"`
+	FirstName        string     `schema:"firstname" db:"first_name"`
+	LastName         string     `schema:"lastname" db:"last_name"`
+	Address          Address    `schema:"-"`
 	Phone            string     `schema:"phone" db:"phone"`
 	OfAge            bool       `schema:"ofage"`
 	DOB              *time.Time `schema:"dob"`
@@ -43,11 +43,11 @@ type User struct {
 	EmailCheck       string     `schema:"emailcheck"`
 	Password         string     `schema:"password" db:"password"`
 	PasswordCheck    string     `schema:"passwordcheck"`
-	Authorized       bool
-	TextOK           bool `db:"text_ok"`
-	MembershipStatus int  `db:"membership_status_id"`
-	MembershipOption int  `db:"membership_option"`
-	RBACRole         int  `db:"rbac_role_id"`
+	Authorized       bool       `schema:"-"`
+	TextOK           bool       `db:"text_ok"`
+	MembershipStatus int        `db:"membership_status_id"`
+	MembershipOption int        `db:"membership_option"`
+	RBACRole         int        `db:"rbac_role_id"`
 }
 
 //ErrNotAuthorized is used when the user is not authorized to perform the requested action
