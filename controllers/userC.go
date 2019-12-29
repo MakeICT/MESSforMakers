@@ -1,56 +1,383 @@
-/*
- MESS for Makers - An open source member and event management platform
-    Copyright (C) 2017  Sam Schurter
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package controllers
 
 import (
+	"fmt"
+	"math"
 	"net/http"
+	"strconv"
+	"time"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/golangcollege/sessions"
+	"github.com/gorilla/mux"
 
 	"github.com/makeict/MESSforMakers/models"
+	"github.com/makeict/MESSforMakers/util"
 	"github.com/makeict/MESSforMakers/views"
 )
 
-//separate files for each individual controller
-//a controller is a struct, with methods defined on the struct for each action
-
-// the struct defines what the controller needs to be able to pass into any given page it needs to render
+//UserController implements the handlers required for user management
 type UserController struct {
 	Controller
-	DB *sqlx.DB
+	UserView views.View
 }
 
-// setup function that stores the database pool in the controller, or other things if necessary
-func User(db *sqlx.DB) UserController {
-	return UserController{DB: db}
-}
+//Initialize performs the required setup for a user controller
+func (uc *UserController) Initialize(cfg *util.Config, um Users, l *util.Logger, s *sessions.Session) error {
+	uc.setup(cfg, um, l, s)
 
-// a handler
-func (c *UserController) Index() func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
+	uc.UserView = views.View{}
 
-		//needs to be a slice of User from the database
-		//pagination needs to be built in from the start. get from query param if
-		//there and store in cookie. else, get from cookie
-		users, _ := models.GetAllUsers(c.DB, 10, 0)
-
-		if err := views.User.Index.Render(w, users); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+	if err := uc.UserView.LoadTemplates("user"); err != nil {
+		return fmt.Errorf("Error loading user templates: %v", err)
 	}
+
+	return nil
+}
+
+// List generates alist of all users to display. For admin purposes.
+func (uc *UserController) List() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		form := util.NewForm(r.URL.Query())
+
+		page := 1
+		p := form.Get("page")
+		if p != "" {
+			n, err := strconv.ParseFloat(p, 64)
+			if err == nil && n != 0 {
+				page = int(n)
+			}
+			form.Errors = nil //Once this field of the url params has been checked, don't want to contminate the rest.
+		}
+
+		sort := form.Get("sort")
+		if sort != "" {
+			form.PermittedValues(sort, "fname", "lname", "dob")
+			if !form.Valid() {
+				sort = ""
+			}
+			form.Errors = nil //Once this field of the url params has been checked, don't want to contminate the rest.
+		}
+
+		dir := form.Get("dir")
+		if dir != "" {
+			form.PermittedValues(dir, "asc", "desc")
+			if !form.Valid() {
+				dir = ""
+			}
+			form.Errors = nil //Once this field of the url params has been checked, don't want to contminate the rest.
+		}
+
+		users, err := uc.Users.GetAll(20, page, sort, dir)
+		if err != nil {
+			uc.serverError(w, err)
+			return
+		}
+
+		td, err := uc.DefaultData(r)
+		if err != nil {
+			http.Error(w, "could not generate default data", http.StatusInternalServerError)
+			return
+		}
+		td.Add("Users", users)
+		if err := uc.UserView.Render(w, r, "users.gohtml", td); err != nil {
+			uc.serverError(w, err)
+			return
+		}
+	})
+}
+
+//Show gets the parameter from the url and gets the details for that user from the database
+func (uc *UserController) Show() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id, ok := util.IntOK(vars["id"], 1, math.MaxInt8)
+		if !ok {
+			uc.clientError(w, http.StatusBadRequest)
+			return
+		}
+		user, err := uc.Users.Get(int(id)) //OK to convrt back to int because explicitly required size to be between 1 and MaxInt8
+		if err != nil {
+			uc.serverError(w, err)
+			return
+		}
+
+		td, err := uc.DefaultData(r)
+		if err != nil {
+			uc.serverError(w, err)
+		}
+
+		td.Add("User", user)
+
+		if err := uc.UserView.Render(w, r, "show.gohtml", td); err != nil {
+			uc.serverError(w, err)
+			return
+		}
+	})
+}
+
+//ShowCurrent gets the parameter from the url and gets the details for that user from the database
+func (uc *UserController) ShowCurrent() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		user, ok := r.Context().Value(1).(*models.User)
+
+		if !ok {
+			uc.clientError(w, http.StatusBadRequest)
+			return
+		}
+		user, err := uc.Users.Get(user.ID)
+		if err != nil {
+			uc.serverError(w, err)
+			return
+		}
+
+		td, err := uc.DefaultData(r)
+		if err != nil {
+			uc.serverError(w, err)
+		}
+
+		td.Add("User", user)
+
+		if err := uc.UserView.Render(w, r, "show.gohtml", td); err != nil {
+			uc.serverError(w, err)
+			return
+		}
+	})
+}
+
+//SignupForm displays the signup form
+func (uc *UserController) SignupForm() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		td, err := uc.DefaultData(r)
+		if err != nil {
+			http.Error(w, "could not generate default data", http.StatusInternalServerError)
+			return
+		}
+		td.Add("Form", util.NewForm(nil))
+
+		if err := uc.UserView.Render(w, r, "signup.gohtml", td); err != nil {
+			uc.serverError(w, err)
+			return
+		}
+	})
+}
+
+//Signup saves a new user to the database
+func (uc *UserController) Signup() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		r.ParseForm()
+		form := util.NewForm(r.PostForm)
+
+		form.Required("firstname", "lastname", "email", "email2", "password", "password2", "dob.mm", "dob.dd", "dob.yyyy", "phone")
+		form.RequiredIf("membershipoption", r.FormValue("membersignup") == "on")
+		form.PermittedValues("membershipoption", "1", "2", "3", "4", "5", "6")
+		form.MatchField("email", "email2")
+		form.MatchField("password", "password2")
+		form.MinLength("password", 4)
+		form.MaxLength("firstname", 255)
+		form.MaxLength("lastname", 255)
+		form.MaxLength("email", 255)
+		form.MaxLength("phone", 15)
+		form.MatchPattern("email", util.EmailRegEx)
+		form.MatchPattern("phone", util.PhoneRegEx)
+		pn := form.ValidPhone("phone")
+
+		dobM, okM := util.IntOK(r.FormValue("dob.mm"), 1, 12)                                 //month is an int between 1 and 12
+		dobD, okD := util.IntOK(r.FormValue("dob.dd"), 1, 31)                                 //day is an int between 1 and 31
+		dobY, okY := util.IntOK(r.FormValue("dob.yyyy"), 1900, int64(time.Now().Year()))      //year is an int between 1900 and the current year
+		dob, err := time.Parse("01-02-2006", fmt.Sprintf("%02d-%02d-%02d", dobM, dobD, dobY)) //normalize the date before trying to parse it
+		if err != nil || !okM || !okD || !okY {
+			form.Errors.Add("dob", "Could not recognize date")
+		}
+
+		var ms, mo int
+		ms = 1
+		if r.FormValue("membersignup") == "on" {
+			//The error from Atoi is ignored because the value has already been confirmed to be the string 1, 2, 3, 4, 5, or 6
+			mo, _ = strconv.Atoi(r.FormValue("membershipoption"))
+			ms = 1
+		}
+
+		/*
+			if u.OfAge == false && u.Guardian == "" {
+				ue.Guardian = "If you are under 18, you must have the permission of a parent or legal guardian."
+				errorsFound = true
+			}
+		*/
+
+		if !form.Valid() {
+			td, err := uc.DefaultData(r)
+			if err != nil {
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			}
+
+			td.Flash = views.Flash{Type: views.Failure, Message: "There were errors saving the form"}
+
+			//To minimize the number of times the plaintext password is passed back and forth, remove it before responding
+			form.Set("password", "")
+			form.Set("password2", "")
+
+			td.Add("Form", form)
+			uc.UserView.Render(w, r, "signup.gohtml", td)
+			return
+		}
+
+		u := &models.User{
+			FirstName:        r.FormValue("firstname"),
+			LastName:         r.FormValue("lastname"),
+			Email:            r.FormValue("email"),
+			Password:         r.FormValue("password"),
+			DOB:              &dob,
+			Phone:            pn,
+			TextOK:           r.FormValue("oktotext") == "on",
+			MembershipStatus: ms,
+			MembershipOption: mo,
+		}
+
+		err = uc.Users.Create(u)
+		if err != nil {
+
+			td, err2 := uc.DefaultData(r)
+			if err2 != nil {
+				http.Error(w, "could not generate default data", http.StatusInternalServerError)
+				return
+			}
+
+			form.Set("password", "")
+			form.Set("password2", "")
+
+			td.Flash = views.Flash{Type: views.Failure, Message: fmt.Sprintf("Could not save user: %s", err.Error())}
+
+			td.Add("Form", form)
+			uc.UserView.Render(w, r, "signup.gohtml", td)
+			return
+		}
+
+		uc.Session.Put(r, "flash", "Successfully saved user!")
+
+		http.Redirect(w, r, fmt.Sprintf("http://%s:%d/user/%d", uc.AppConfig.App.Host, uc.AppConfig.App.Port, u.ID), http.StatusSeeOther)
+		return
+	})
+}
+
+//LoginForm displays the log in form
+func (uc *UserController) LoginForm() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		td, err := uc.DefaultData(r)
+		if err != nil {
+			uc.serverError(w, err)
+			return
+		}
+		td.Add("Form", util.NewForm(nil))
+		if err := uc.UserView.Render(w, r, "login.gohtml", td); err != nil {
+			uc.serverError(w, err)
+		}
+
+	})
+}
+
+//Login performs a login
+func (uc *UserController) Login() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		r.ParseForm()
+		form := util.NewForm(r.PostForm)
+		form.Required("username", "password")
+		if !form.Valid() {
+			td, err := uc.DefaultData(r)
+			td.Add("Form", form)
+			if err != nil {
+				uc.serverError(w, err)
+				return
+			}
+			if err := uc.UserView.Render(w, r, "login.gohtml", td); err != nil {
+				uc.serverError(w, err)
+				return
+			}
+		}
+
+		id, authKey, err := uc.Users.Login(r.FormValue("username"), r.FormValue("password"), r.RemoteAddr, r.UserAgent())
+		if err == models.ErrBadUsernamePassword {
+			td, err := uc.DefaultData(r)
+			if err != nil {
+				uc.serverError(w, err)
+				return
+			}
+			td.Add("Form", form)
+			td.Flash = views.Flash{Type: views.Failure, Message: "Bad username or password"}
+			if err := uc.UserView.Render(w, r, "login.gohtml", td); err != nil {
+				uc.serverError(w, err)
+				return
+			}
+			return
+		} else if err != nil {
+			uc.serverError(w, err)
+			return
+		}
+
+		uc.Session.Put(r, "user", id)
+		uc.Session.Put(r, "authKey", authKey)
+		uc.Session.Put(r, "flash", "Logged in!")
+
+		http.Redirect(w, r, fmt.Sprintf("http://%s:%d/", uc.AppConfig.App.Host, uc.AppConfig.App.Port), http.StatusSeeOther)
+		return
+
+	})
+}
+
+//Logout logs a user out
+func (uc *UserController) Logout() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		val := r.Context().Value(models.ContextkeyUser)
+		user := models.User{}
+		if val == nil { //If there no value in the context, no user is authenticated
+			return
+		}
+		user, ok := val.(models.User)
+		if !ok { //if the value in the context can't be asserted to be a user, then no user is authenticated
+			return
+		}
+		uc.Session.Remove(r, "user")
+		authKey := uc.Session.PopString(r, "authKey")
+		err := uc.Users.SessionDelete(user.ID, authKey)
+		if err != nil {
+			uc.serverError(w, err)
+			return
+		}
+		uc.Session.Put(r, "flash", "Logged out!")
+	})
+}
+
+//EditForm displays the form for editing a user
+func (uc *UserController) EditForm() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		td, err := uc.DefaultData(r)
+		if err != nil {
+			uc.serverError(w, err)
+			return
+		}
+		if err := uc.UserView.Render(w, r, "edit.gohtml", td); err != nil {
+			uc.serverError(w, err)
+			return
+		}
+	})
+}
+
+//Edit saves the changes to a user to the database
+func (uc *UserController) Edit() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "editing users not implemented yet", http.StatusInternalServerError)
+		return
+	})
+}
+
+//Delete removes a user from the database
+func (uc *UserController) Delete() func(http.ResponseWriter, *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "deleting users not implemented yet", http.StatusInternalServerError)
+		return
+	})
 }

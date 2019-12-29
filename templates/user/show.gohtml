@@ -1,0 +1,85 @@
+{{template "site_default" .}}
+
+{{define "page_header"}}
+{{- end}}
+
+{{define "page_nav"}}
+{{- end}}
+
+{{define "page_content"}}
+  <h4>My Membership</h4>
+  <div class="row">
+    <div class="col s3 m2">
+      <p>First Name</p>
+      <p>{{if .Data.User.FirstName}}{{.Data.User.FirstName}}{{end}}</p>
+    </div>
+    <div class="col s3 m2">
+      <p>Last Name</p>
+      <p>{{if .Data.User.LastName}}{{.Data.User.LastName}}{{end}}
+    </div>
+    <div class="col s3 m2">
+      <p>Phone</p>
+      <p>{{if .Data.User.Phone}}{{.Data.User.Phone}}{{end}}</p>
+    </div>
+    <div class="col s3 m2">
+      <p>Email</p>
+        <p>{{if .Data.User.Email}}{{.Data.User.Email}}{{end}}</p>
+    </div>
+    <div class="col s3 m2">
+      <p>Password</p>
+      <p>{{if .Data.User.Password}}{{.Data.User.Password}}{{end}}</p>
+    </div>
+  </div>
+  <div class="row">
+    <a href="/user/{{.Data.User.ID}}/edit" class="waves-effect waves-light btn">Edit Profile</a>
+  </div>
+  <div class="row">
+    <div class="col s8 offset-s2 m4 offset-m2">
+      <a href="#">
+          <div class="card red">
+              <div class="card-content white-text">
+                  <span class="card-title">My Events</span>
+                  <p>Look at this list of events you are registered for!</p>
+              </div>
+          </div>
+      </a>
+    </div>
+    <div class="col s8 m4 ">
+      <a href="#">
+          <div class="card red">
+              <div class="card-content white-text">
+                  <span class="card-title">My Volunteering</span>
+                  <p>Look at this list of events you are volunteering for!</p>
+              </div>
+          </div>
+      </a>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col s8 offset-s2 m4 offset-m2">
+      <a href="#">
+          <div class="card red">
+              <div class="card-content white-text">
+                  <span class="card-title">Upcoming Events</span>
+                  <p>Look at this list of events you might be interested in!</p>
+              </div>
+          </div>
+      </a>
+    </div>
+    <div class="col s8 m4 ">
+      <a href="#">
+          <div class="card red">
+              <div class="card-content white-text">
+                  <span class="card-title">Volunteer Opportunities</span>
+                  <p>Look at this list of events you can volunteer for!</p>
+              </div>
+          </div>
+      </a>
+    </div>
+  </div>
+
+
+{{ end }}
+
+{{define "page_footer"}}
+{{- end}}

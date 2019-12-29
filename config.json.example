@@ -3,11 +3,17 @@
 		"username":"",
 		"password":"",
 		"host":"",
-		"port":"",
+		"port":5432,
 		"database":"",
-		"sslmode":""
+		"sslmode":"disable"
 	},
 	"logger_settings": {
-		"dump_request":""
+		"dump_request":false,
+		"log_file":"makeict.log"
+	},
+	"app_settings": {
+		"port":8080,
+		"host":"localhost",
+		"session_key":"32byterandomstringhere"
 	}
 }

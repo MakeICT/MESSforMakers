@@ -1,0 +1,38 @@
+{{ define "meta-head" }}
+
+	<title>MakeICT | Reserve</title>
+{{ end }}
+
+{{ define "content" }}
+		    <div class="row">
+		        <h3 class="header">Reserve</h2>
+		    </div>
+		    <div class="row">
+    			<div class="col s12">
+    				<p class="flow-text">Blah blah requirements for requesting a reservation on whatever</p>
+    				<p>{{.}}</p>
+    			</div>
+			</div>
+		    <div class="row">
+		        <div class="col s8 offset-s2 m4 offset-m2">
+		            <a href="reserve-room">
+    		            <div class="card red">
+    		                <div class="card-content white-text">
+    		                    <span class="card-title">Reserve A Room</span>
+    		                    <p>If you need to reserve a room for a private function</p>
+    		                </div>
+    		            </div>
+		            </a>
+		        </div>
+		        <div class="col s8 offset-s2 m4">
+		            <a href="reserve-equipment">
+    		            <div class="card red">
+    		                <div class="card-content white-text">
+    		                    <span class="card-title">Reserve Equipment</span>
+    		                    <p>For high-use equipment that requires a reservation, like the Laser or Tormach</p>
+    		                </div>
+    		            </div>
+		            </a>
+		        </div>
+		    </div>
+{{end}}

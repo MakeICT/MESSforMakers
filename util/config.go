@@ -1,4 +1,4 @@
-package main
+package util
 
 import (
 	"encoding/json"
@@ -13,11 +13,17 @@ type Config struct {
 		Database string `json:"database"`
 		Host     string `json:"host"`
 		Port     int    `json:"port"`
-		SSL      bool   `json:"sslmode"`
+		SSL      string `json:"sslmode"`
 	} `json:"database_settings"`
 	Logger struct {
-		DumpRequest string `json:"dump_request"`
+		DumpRequest bool   `json:"dump_request"`
+		LogFile     string `json:"log_file"`
 	} `json:"logger_settings"`
+	App struct {
+		Host       string `json:"host"`
+		Port       int    `json:"port"`
+		SessionKey string `json:"session_key"`
+	} `json:"app_settings"`
 }
 
 // InitConfig parse configuration file and setup settings

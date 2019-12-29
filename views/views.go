@@ -1,50 +1,115 @@
-/*
- MESS for Makers - An open source member and event management platform
-    Copyright (C) 2017  Sam Schurter
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package views
 
 import (
+	//"fmt"
+	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"path/filepath"
+	"time"
+
+	"github.com/makeict/MESSforMakers/models"
 )
 
-//generic defaults pages for each controller
+// View is a struct holding a template cache with a render method defined on it.
 type View struct {
-	Index Page
-	Show  Page
-	New   Page
-	Edit  Page
+	TemplateCache map[string]*template.Template
 }
 
-type Page struct {
-	Template *template.Template
-	Layout   string
+// TemplateData is a holder for all the default data, and an interface for the rest
+type TemplateData struct {
+	AuthUser  *models.User
+	CSRFToken string
+	Flash     Flash
+	Root      string
+	PageTitle string
+	Data      map[string]interface{}
 }
 
-func (self *Page) Render(w http.ResponseWriter, data interface{}) error {
-	return self.Template.ExecuteTemplate(w, self.Layout, data)
+// Render writes the template and data to the provided writer
+func (v *View) Render(w http.ResponseWriter, r *http.Request, page string, td *TemplateData) error {
+	t := v.TemplateCache[page]
+	return t.ExecuteTemplate(w, page, td)
+
 }
 
-func LayoutFiles() []string {
-	files, err := filepath.Glob("templates/layouts/*.gohtml")
-	if err != nil {
-		log.Panic(err)
+func niceDate(t *time.Time) string {
+	if t == nil || t.IsZero() {
+		return ""
 	}
-	return files
+	return t.In(time.Now().Location()).Format("02-Jan-06 15:04")
+}
+
+var fm = template.FuncMap{
+	"niceDate": niceDate,
+}
+
+// LoadTemplates takes a string of folders and loads the templates into the view
+func (v *View) LoadTemplates(f string) error {
+
+	tc := map[string]*template.Template{}
+
+	pages, err := filepath.Glob(fmt.Sprintf("templates/%s/*.gohtml", f))
+	if err != nil {
+		return fmt.Errorf("could not find view page templates: %v", err)
+	}
+
+	for _, p := range pages {
+		n := filepath.Base(p)
+
+		t, err := template.New(n).Funcs(fm).ParseFiles(p)
+		if err != nil {
+			return fmt.Errorf("could not create template from page: %v", err)
+		}
+
+		t, err = t.ParseGlob("templates/layouts/*.gohtml")
+		if err != nil {
+			return fmt.Errorf("could not create layout templates: %v", err)
+		}
+
+		t, err = t.ParseGlob(fmt.Sprintf("templates/%s/include/*.gohtml", f))
+		if err != nil {
+			return fmt.Errorf("could not create include templates: %v", err)
+		}
+
+		tc[n] = t
+	}
+
+	v.TemplateCache = tc
+
+	return nil
+
+}
+
+//AddMap is useful for controllers when there are many values to be added to the DataStore
+func (d *TemplateData) AddMap(ms ...map[string]interface{}) {
+	if d.Data == nil {
+		d.Data = make(map[string]interface{})
+	}
+	for _, stringMap := range ms {
+		for k, v := range stringMap {
+			d.Data[k] = v
+		}
+	}
+}
+
+//Add is useful for views when just a single value needs to be added
+func (d *TemplateData) Add(k string, v interface{}) {
+	if d.Data == nil {
+		d.Data = make(map[string]interface{})
+	}
+	d.Data[k] = v
+}
+
+//Defines the types of flash messages for proper user styling
+const (
+	Empty = iota
+	Success
+	Warning
+	Failure
+)
+
+type Flash struct {
+	Type    int
+	Message string
 }

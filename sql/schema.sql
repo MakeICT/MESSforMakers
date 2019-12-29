@@ -1,8 +1,3 @@
---
-
--- This command must be run as superuser once per database:
-CREATE EXTENSION btree_gist;
-
 --------------------------------------------------------------------------------------------------------------------------------
 -- Tables need for control of member in the site
 --------------------------------------------------------------------------------------------------------------------------------
@@ -37,6 +32,8 @@ CREATE TABLE rbac_role (
 );
 COMMENT ON TABLE rbac_role IS 'Groups permissions to assign to a member';
 
+INSERT INTO rbac_role (name) VALUES ('guest');
+
 CREATE TABLE rbac_role_permission_rel (
       id SERIAL PRIMARY KEY
     , rbac_role_id INTEGER NOT NULL REFERENCES rbac_role(id) ON DELETE CASCADE
@@ -58,7 +55,7 @@ CREATE TABLE rbac_role_group_rel (
 	, rbac_group_id INTEGER NOT NULL REFERENCES rbac_group(id) ON DELETE CASCADE
 	, UNIQUE (rbac_role_id, rbac_group_id)
 );
-COMMENT ON TABLE rbac_role_group_rel IS 'links the group of permissions to a spevific role';
+COMMENT ON TABLE rbac_role_group_rel IS 'links the group of permissions to a specific role';
 
 CREATE TABLE rbac_group_permission_rel (
 	id SERIAL PRIMARY KEY
@@ -92,7 +89,8 @@ INSERT INTO membership_options (name, is_recurring, period) VALUES ('One month',
 
 CREATE TABLE member (
       id SERIAL PRIMARY KEY
-    , name TEXT NOT NULL
+    , first_name TEXT NOT NULL
+    , last_name TEXT NOT NULL
     , username TEXT NOT NULL -- must be valid email
 	, password TEXT NOT NULL
     , dob DATE NOT NULL
@@ -102,10 +100,23 @@ CREATE TABLE member (
 	, membership_option INTEGER REFERENCES membership_options(id)
 	, rbac_role_id INTEGER NOT NULL REFERENCES rbac_role(id)
     , created_at TIMESTAMP NOT NULL DEFAULT now()
-    , updated_at TIMESTAMP
+    , updated_at TIMESTAMP NOT NULL DEFAULT now()
     , UNIQUE (username)  -- members cannot sign up for multiple accounts with the same email
 );
 COMMENT ON TABLE member IS 'Core table of all members and guests';
+
+CREATE TABLE member_address (
+	id SERIAL PRIMARY KEY
+	, member_id INTEGER NOT NULL REFERENCES member(id) ON DELETE CASCADE
+	, addr_type TEXT NOT NULL --home or billing
+	, addr1 TEXT NOT NULL
+	, addr2 TEXT
+	, city TEXT NOT NULL
+	, state TEXT NOT NULL
+	, zip TEXT NOT NULL
+	, UNIQUE(member_id, addr_type)
+);
+COMMENT ON TABLE member_address IS 'Home and billing addresses for members and guests';
 
 CREATE TABLE member_access_token (
       id SERIAL PRIMARY KEY
@@ -129,7 +140,19 @@ CREATE TABLE login_log (
     , login_status_id INTEGER NOT NULL REFERENCES login_status(id) ON DELETE RESTRICT
     , created_at TIMESTAMP NOT NULL DEFAULT now()
 );
-COMMENT ON TABLE login_log IS 'Keep track of member login for trouble shooting and usage data';
+COMMENT ON TABLE login_log IS 'Keep track of member login attempts for troubleshooting and usage data';
+
+CREATE TABLE session (
+	  id SERIAL PRIMARY KEY
+	, member_id INTEGER NOT NULL REFERENCES member(id) ON DELETE CASCADE
+	, authtoken VARCHAR(64) NOT NULL
+	, originated TIMESTAMP NOT NULL DEFAULT now()
+	, last_seen TIMESTAMP NOT NULL DEFAULT now()
+	, last_ip VARCHAR(46) NOT NULL --46 characters will allow for storing ipv6 addresses or ipv4
+	, agent VARCHAR(100) NOT NULL --100 characters is enough to get a good idea of the user agent
+	, UNIQUE (authtoken)
+);
+COMMENT ON TABLE session IS 'Keep track of user sessions, allow them to be deleted, expired, and investigated.';
 
 CREATE TABLE member_ice (
       id SERIAL PRIMARY KEY
@@ -149,8 +172,6 @@ CREATE TABLE waivers (
 	, UNIQUE (filename)
 );
 COMMENT ON TABLE waivers IS 'Location and date for all member waivers to allow area and equipment access';
-
-
 
 CREATE TABLE addon_types (
 	id SERIAL PRIMARY KEY

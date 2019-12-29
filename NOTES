@@ -1,0 +1,226 @@
+Middleware:
+error/panic
+security
+body parsing
+
+
+
+Testing
+Functional testing - check links, check forms for input validation and response, test cookies and sessions, check css links, check js links, database content testing
+compatibility testing - browser compatibility, os compatibility, device compatibility
+performance testing - web load, web stress
+Security testing
+usability testing
+
+Use Agouti with Ginkgo and Gomega for acceptance and BDD testing
+use built in testing for any unit tests
+
+For database, use SQLX, should be compatible with any normal database/sql stuff, but also has extended features and additional security
+Custom types can also be saved to database or read from database implementing extended fuctionality. Implement the Valuer interface to do things to custom types used as bindvars, or the Scanner interface to do
+things to values scanned into variables from row objects.
+
+
+Cookie security
+Serve over https any time cookies are involved
+track login by device, if user logs in from a device which they are not logged in on, even if the cookie matches, re-enter password.
+Hash the cookie and send the hash with the cookie to prevent tanpering. Make sure to set an expire field for login cookies, and then hash the cookie.
+Obfuscate data. Don't store the username and ID, just store a token in the cookie. Then lookup the logged in user by active token.
+Reduce attack surface. Store only the absolute minimum data in a cookie. Never password.
+Unless we decide JS really needs access to cookies, use HttpOnly by default. Helps with XSS
+
+
+Look more into: SQL injection, XSS, and CSRF
+
+
+
+POSTGRESQL cheatsheet
+
+Upgrading postgres:
+    Add the new version repo to apt 
+    echo "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+    
+    add the signing certificate to apt
+    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+    
+    update apt to get the list of packages including version 10
+    sudo apt-get update
+    
+    Install version 10
+    sudo apt-get install postgresql-10
+    choose keep local when asked 
+    
+    drop the new cluster, upgrade the old cluster, drop the old cluster.
+    sudo pg_dropcluster --stop 10 main
+    sudo pg_upgradecluster 9.3 main
+    sudo pg_dropcluster 9.3 main
+    
+
+    comments: --
+    
+    run sql file on user, password, host, database
+    psql postgres://postgres_test:password@localhost/makeict -f schema.sql
+    
+    List users:
+    \du
+    
+    create a user:
+    CREATE ROLE <user> WITH LOGIN PASSWORD 'password';
+    ALTER ROLE <user> CREATEDB;
+    
+    list databases:
+    \list
+    
+    create a database:
+    CREATE DATABASE <name> OWNER <user>;
+    
+    list tables:
+    \dt
+    
+    column definition
+    name type [[CONSTRAINT constraint_name] constraints]
+    
+    contains:
+    @>
+    
+    overlaps:
+    &&
+    
+    inclusive:
+    []
+    
+    exclusive:
+    ()
+
+    Heroku Postgres instance:
+    Host: ec2-23-21-220-32.compute-1.amazonaws.com; Database: dc9hak1f3kqc35; User: vztngihfamevpx; Port: 
+5432; Password: 2555f8b0e9f19cef182deb741958401065d75e1fe6aa91839a383908e9717682;
+    
+    Heroku connection string:
+    postgres://vztngihfamevpx:2555f8b0e9f19cef182deb741958401065d75e1fe6aa91839a383908e9717682@ec2-23-21-220-32.compute-1.amazonaws.com:5432/dc9hak1f3kqc35
+
+    Using COALESCE and NULLIF to handle nulls in querys
+SELECT
+ id,
+ title,
+ COALESCE ( NULLIF (excerpt, ''), LEFT (body, 40) )
+ -- coalesce returns the first non-null argument. nullif returns null if the two arguments are equal otherwise it returns the first argument.
+ -- so, if the excerpt is null, it will not match the empty string and return null. if it DOES match the empty string it will return null.
+ -- if it is not empty, it will not match, and will return an actual excerpt.  If for either reason nullif returns null, coalesce will move on and return the first 40 of the body.
+ --
+FROM
+ posts;
+
+GIT CHEATSHEET
+
+    create a local branch:
+    git branch <branch name>
+    
+    switch to local branch:
+    git checkout <branch name>
+    
+    merge other branch into current branch:
+    git merge <other branch>
+    
+    delete local branch:
+    git branch -d <branch name>
+    
+    push changes to a repo
+    git push <repo name> <branch name>
+    
+    list local branches:
+    git branch
+    
+    list remote branches
+    git branch -r
+    
+    add remote repo
+    git remote add <shortcut> <repo link>
+    
+
+https://material.io/color/#!/?view.left=0&view.right=1&primary.color=ff4438&secondary.color=97999b&secondary.text.color=303133&primary.text.color=232426
+
+http://makeict.org/wiki/Logo_and_branding
+
+Templating notes:
+set up a default struct format for holding basic necesities like page title
+extract header and footer to fragments
+How to make different fragments render for different users logged in or no login at all
+https://codepen.io/tmd-uk/pen/GgVWGG for hover dropdowns
+
+
+to get chrome testing working:
+http://engineering.pivotal.io/post/headless-ui-testing-with-go-agouti-and-chrome/
+plus, install libnss3
+curl -XPOST http://127.0.0.1:9515/session -d '{"desiredCapabilities": {"chromeOptions": {"args": ["disable-gpu", "headless"]}}}'
+plus, upgrade chromedriver to latest
+
+
+Continue here:
+https://groups.google.com/forum/#!topic/golang-nuts/bStLPdIVM6w
+
+Some static file serving info with unit tests
+https://shakedos.com/serving-static-files-with-go
+
+https://www.meetspaceapp.com/2016/05/16/acceptance-testing-go-webapps-with-cookies.html
+
+Some good info on conditional rendering of admin menus etchttps://stackoverflow.com/questions/29689426/conditional-rendering-of-html-in-golang-layout-tpl-by-session-variable
+
+more good stuff here: http://tech.townsourced.com/post/anatomy-of-a-go-web-app/
+
+Registration process: (user controller)
+    user clicks signup link
+    server presents the registration form
+    user submits the registration form
+    all data is checked for validity
+    server stores data, hashes and salts password prior to storage.
+    token is generated for email delivery, with expiration.
+    if account is not verified within a certain number of days, it is deleted
+    as soon as account is verified, delete token
+    
+
+login process:  (user controller)
+    user clicks login link. (GET request)
+    user is presented with login form
+    user submits login form (POST request)
+    Password is checked for validity. (if password is not valid, return to login form w/ username saved.)
+        password is hashed and compared to the stored password.
+    Server creates auth key and stores it in cockie on user's side
+    server stores auth key in table with expiration
+
+authentication process (middleware)
+    any request is made
+    server checks request cookies for auth key
+    if key is present, check session table for expiration, and user table for existence.
+    
+    create table UserSession (
+     SessionKey text primary key,
+     UserID int not null, -- Could have a hard "references User"
+     LoginTime <time type> not null,
+     LastSeenTime <time type> not null
+    )
+
+password reset process:
+    user clicks forgot password
+    euser is presented with form requesting username
+    user submits their email
+    a token is created with an expiration attached to the email.
+    when the user clicks the email link, the server presents a reset password form for that user
+    user submits new password
+    server checks for validity, hashes, salts, stores, and deletes reset token
+    server redirects user to login
+
+Passwords should be minimum 12 characters, and not on the top 1000 passwords list. No other requirements?
+pass through a sha512 to limit size, but have no actual max length
+use crypto/rand not math/rand
+
+http://tech.townsourced.com/post/anatomy-of-a-go-web-app-authentication/
+https://gowebexamples.com/sessions/
+https://astaxie.gitbooks.io/build-web-application-with-golang/en/14.4.html
+
+lookup gorilla sessions
+figure out how to get ALL http and request crap out of the model.
+
+
+Context.WithValue to push a vaue into a context. takes a context, returns a context. requires a key, and a value. key must not be a built-in type
+Request.WithContext pushes a context into a request. returns the request with the context. requires only a context as argument
+Request.Context returns a context residing in the request. context.Value can be chained with the returned context and the key to get the value back later in the pipeline.
