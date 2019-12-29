@@ -6,14 +6,9 @@ import (
 
 //InitDB connects to the database and checks the connection
 func InitDB(dataSourceName string) (*sqlx.DB, error) {
-
-	//open returns no error as no connection is made until needed
-	//TODO sqlx.Connect should do the following in one line, and sqlx.MustConnect will cause a panic if connection fails
-	db, _ := sqlx.Open("postgres", dataSourceName)
-	//force a connection and check that it works.
-	if err := db.Ping(); err != nil {
+	db, err := sqlx.Connect("postgres", dataSourceName)
+	if err != nil {
 		return nil, err
 	}
-
 	return db, nil
 }

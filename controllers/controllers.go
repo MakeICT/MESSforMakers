@@ -3,9 +3,11 @@
 package controllers
 
 import (
+	"encoding/gob"
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"sync"
 
 	"github.com/golangcollege/sessions"
 
@@ -13,6 +15,8 @@ import (
 	"github.com/makeict/MESSforMakers/util"
 	"github.com/makeict/MESSforMakers/views"
 )
+
+var once sync.Once
 
 // Users interface defines the methods that a Users model must fulfill. Allows mocking with a fake database for testing.
 type Users interface {
@@ -23,6 +27,8 @@ type Users interface {
 	Delete(*models.User) error
 	Login(string, string, string, string) (int, string, error)
 	SessionLookup(int, string) (*models.User, error)
+	SessionDelete(int, string) error
+	SessionUpdate(int, string) error
 }
 
 // Controller is a struct Struct to store pointer to cookiestore, database, and logger and any other things common to many controllers
@@ -42,13 +48,20 @@ func (c *Controller) setup(cfg *util.Config, um Users, l *util.Logger, s *sessio
 	c.Logger = l
 	c.AppConfig = cfg
 	c.Session = s
+	once.Do(func() {
+		gob.Register(views.Flash{})
+	})
 }
 
 // DefaultData ia the method to generate required default template data and return template object
 func (c *Controller) DefaultData(r *http.Request) (*views.TemplateData, error) {
 	td := &views.TemplateData{}
 	td.Root = fmt.Sprintf("http://%s:%d/", c.AppConfig.App.Host, c.AppConfig.App.Port)
-	td.Flash = c.Session.PopString(r, "flash")
+	if f, ok := c.Session.Pop(r, "flash").(views.Flash); ok {
+		td.Flash = f
+	} else {
+		td.Flash = views.Flash{Type: views.Empty, Message: ""}
+	}
 	return td, nil
 }
 

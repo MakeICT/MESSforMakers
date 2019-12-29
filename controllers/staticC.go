@@ -45,7 +45,7 @@ func (sc *StaticController) Root() func(http.ResponseWriter, *http.Request) {
 
 		td.CSRFToken = "csrftoken"
 
-		td.Flash = "flash message"
+		td.Flash = views.Flash{Type: views.Failure, Message: "flash message"}
 
 		td.PageTitle = "Title here"
 

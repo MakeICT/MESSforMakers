@@ -46,7 +46,8 @@ func (a *application) appRouter() {
 	router.HandleFunc("/user/{id:[0-9]+}/waiver", noRoute("delete waiver")).Methods("POST").MatcherFunc(makeMatcher("delete"))
 	router.HandleFunc("/admin", noRoute("admin dashboard")).Methods("GET")
 
-	//TODO: need to implement handlers for 404 and 405, then implement router.NotFoundHandler and router.MethodNotAllowedHandler
+	router.NotFoundHandler = a.ErrorC.NotFound()
+	router.MethodNotAllowedHandler = a.ErrorC.NotAllowed()
 
 	//set the app router. Alice will pass all the requests through the middleware chain first,
 	//then to the functions defined above

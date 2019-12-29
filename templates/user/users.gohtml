@@ -1,16 +1,22 @@
 {{template "site_default" . }}
 
 {{define "page_content"}}
-<p>Flash Message: {{.Flash}}<p>
     <table>
         <tr>
-            <th>Name</th>
+            <th>ID</th>
+            <th><a href="?sort=fname&dir=asc">First Name</a></th>
+            <th><a href="?sort=lname&dir=asc">Last Name</a></th>
+            <th>Email</th>
+            <th><a href="?sort=dob&dir=asc">DOB</a></th>
+            <th>Phone</th>
         </tr>
         {{range .Data.Users}}
             <tr>
-                <td>{{.Name}}</td>
+                <td>{{.ID}}</td>
+                <td>{{.FirstName}}</td>
+                <td>{{.LastName}}</td>
                 <td>{{.Email}}</td>
-                <td>{{.DOB}}</td>
+                <td>{{niceDate .DOB}}</td>
                 <td>{{.Phone}}</td>
             </tr>
         {{end}}

@@ -128,17 +128,37 @@ func (f *Form) MatchField(field, match string) {
 	}
 }
 
+//ValidPhone checks if it COULD be a valid, 10 digit, U.S. phone number. It could still be invalid easily, but it fits the basic pattern.
+func (f *Form) ValidPhone(field string) string {
+	pn := stripNonNumeric(f.Get(field))
+	if _, ok := IntOK(pn, 0, 9999999999); !ok || len(pn) != 10 {
+		f.Errors.Add(field, "Not a valid phone number")
+		return ""
+	}
+	return "(" + pn[0:3] + ") " + pn[3:6] + "-" + pn[6:]
+}
+
 // Valid should be called only after calling all the other form validators.
 // Will return true if there are no Errors on the form.
 func (f *Form) Valid() bool {
 	return len(f.Errors) == 0
 }
 
-//IntOK returns an int and an OK flag if the string can be converted to an int between max and min inclusive
-func IntOK(val string, min, max int) (int, bool) {
-	n, err := strconv.Atoi(val)
+//IntOK returns an int64 and an OK flag if the string can be converted to an int between max and min inclusive
+func IntOK(val string, min, max int64) (int64, bool) {
+	n, err := strconv.ParseInt(val, 10, 64)
 	if err != nil || n < min || n > max {
 		return 0, false
 	}
 	return n, true
+}
+
+func stripNonNumeric(s string) string {
+	var r strings.Builder
+	for i := 0; i < len(s); i++ {
+		if '0' <= s[i] && s[i] <= '9' {
+			r.WriteByte(s[i])
+		}
+	}
+	return r.String()
 }

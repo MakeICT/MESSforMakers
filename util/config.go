@@ -16,11 +16,13 @@ type Config struct {
 		SSL      string `json:"sslmode"`
 	} `json:"database_settings"`
 	Logger struct {
-		DumpRequest bool `json:"dump_request"`
+		DumpRequest bool   `json:"dump_request"`
+		LogFile     string `json:"log_file"`
 	} `json:"logger_settings"`
 	App struct {
-		Host string `json:"host"`
-		Port int    `json:"port"`
+		Host       string `json:"host"`
+		Port       int    `json:"port"`
+		SessionKey string `json:"session_key"`
 	} `json:"app_settings"`
 }
 

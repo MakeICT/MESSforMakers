@@ -6,10 +6,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/makeict/MESSforMakers/util"
 )
 
 // Address is to nest an address and keep the User struct cleaner, can also be reused elsewhere
@@ -50,6 +53,16 @@ type User struct {
 	RBACRole         int        `db:"rbac_role_id"`
 }
 
+//UserSession is used for storing the details of a session retrieved from the DB
+type UserSession struct {
+	ID         int        `db:"member_id"`
+	AuthKey    string     `db:"authtoken"`
+	Originated *time.Time `db:"originated"`
+	LastSeen   *time.Time `db:"last_seen"`
+	IP         string     `db:"last_ip"`
+	UserAgent  string     `db:"agent"`
+}
+
 //ErrNotAuthorized is used when the user is not authorized to perform the requested action
 var ErrNotAuthorized = errors.New("authorization failed")
 
@@ -59,11 +72,22 @@ var ErrNoRecord = errors.New("no matching records")
 //ErrBadUsernamePassword is used when the user cannot be logged in due to no matching user in the database or because the wrong password was used.
 var ErrBadUsernamePassword = errors.New("no matching user or password does not match")
 
+//ErrSessionExpired is returned if the user's session is no longer valid
+var ErrSessionExpired = errors.New("user session has expired")
+
 // UserModel stores the database handle and any other globals needed for the database methods
 // All user related DB methods will be defined on this model
 type UserModel struct {
-	DB *sqlx.DB
+	DB       *sqlx.DB
+	HashCost int
+	logger   *util.Logger
 }
+
+//ContextKey will be the type used to retrieve values from a context
+type ContextKey int
+
+//ContextkeyUser is used to retrieve the user struct from the context if it exists
+const ContextkeyUser ContextKey = 1
 
 //Get one user (need user ID populated)
 func (um *UserModel) Get(id int) (*User, error) {
@@ -82,24 +106,39 @@ func (um *UserModel) Get(id int) (*User, error) {
 //GetAll returns "count" many users, starting "offset" users from the beginning
 func (um *UserModel) GetAll(count, page int, sortBy, direction string) ([]*User, error) {
 
-	//TODO implement sort by and direction
 	offset := (page - 1) * count //for page 1 the offset should be 0, etc.
 	q := um.DB.Rebind(`
 		SELECT 
 			id, 
-			first_name, last_name, 
+			first_name, 
+			last_name, 
 			username, 
 			dob, 
-			phone 
+			phone
 		FROM 
 			member 
 		ORDER BY 
-			last_name 
+			%s 
 		LIMIT 
 			? 
 		OFFSET 
-		?
+			?
 	`)
+	orderBy := ""
+	direction = strings.ToUpper(direction)
+	switch sortBy {
+	case "fname":
+		orderBy = "first_name " + direction
+	case "lname":
+		orderBy = "last_name " + direction
+	case "dob":
+		orderBy = "dob " + direction
+	default:
+		orderBy = "id asc"
+	}
+
+	q = fmt.Sprintf(q, orderBy)
+
 	rows, err := um.DB.Queryx(q, count, offset)
 	if err != nil {
 		return nil, err
@@ -132,17 +171,15 @@ func (um *UserModel) Create(u *User) error {
 	q = "SELECT id FROM rbac_role WHERE name = 'guest'"
 	um.DB.Get(&guestRole, q)
 
-	//TODO calculate membership_expires
 	q = um.DB.Rebind(`
 	INSERT INTO member 
 		(first_name, last_name, username, password, dob, phone, membership_status_id, rbac_role_id, created_at, updated_at)
 	VALUES
-	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	RETURNING id`)
 	var id int
 
-	//TODO make the cost a config variable
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), 12)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), um.HashCost)
 	if err != nil {
 		return err
 	}
@@ -187,16 +224,22 @@ func (um *UserModel) Login(u, p, ip, ua string) (int, string, error) {
 	var password []byte
 	err := um.DB.QueryRowx(query, u, p).Scan(&id, &password)
 	if err == sql.ErrNoRows {
-		//TODO log attempt to log in with bad username
+		query = "INSERT INTO login_log (username, login_status_id)"
+		logErr := um.logAttempt(u, "badusername")
+		if logErr != nil {
+			um.logger.Debugf("could not log login attempt: %v", logErr)
+		}
 		return 0, "", ErrBadUsernamePassword
 	} else if err != nil {
 		return 0, "", err
 	}
 
-	//TODO check password
 	err = bcrypt.CompareHashAndPassword(password, []byte(p))
 	if err == bcrypt.ErrMismatchedHashAndPassword {
-		//TODO log attempt to log in with bad password
+		logErr := um.logAttempt(u, "badpassword")
+		if logErr != nil {
+			um.logger.Debugf("could not log login attempt: %v", logErr)
+		}
 		return 0, "", ErrBadUsernamePassword
 	} else if err != nil {
 		return 0, "", err
@@ -208,15 +251,23 @@ func (um *UserModel) Login(u, p, ip, ua string) (int, string, error) {
 		return 0, "", err
 	}
 
-	//store key in database
-	query = "INSERT INTO session (userid, authtoken, loginDate, lastSeenDate) VALUES ($1, $2, $3, $4)"
+	//store session key in database
+	query = `
+		INSERT INTO 
+			session (member_id, authtoken, originated, last_seen, last_ip, agent) 
+		VALUES 
+			($1, $2, CURRENT_TIMESTAMP(0), CURRENT_TIMESTAMP(0), $3, $4)
+	`
 
-	//TODO make the fields datetime not date
-	//TODO make these time.Now() instead
-	_, err = um.DB.Exec(query, id, key, "1-1-1970", "1-1-1970")
+	_, err = um.DB.Exec(query, id, key, ip, ua)
 
 	if err != nil {
 		return 0, "", err
+	}
+
+	err = um.logAttempt(u, "success")
+	if err != nil {
+		um.logger.Debugf("could not log login attempt: %v", err)
 	}
 
 	//return user id and auth key
@@ -224,16 +275,72 @@ func (um *UserModel) Login(u, p, ip, ua string) (int, string, error) {
 }
 
 // SessionLookup searches for a session in the database, and makes sure that it's not deleted or expired.
-//TODO
+//if there
 func (um *UserModel) SessionLookup(id int, auth string) (*User, error) {
 
-	return nil, nil
+	q := um.DB.Rebind("SELECT authtoken, originated, last_seen, last_ip, agent FROM session WHERE member_id = ? AND authkey = ?")
+	r := UserSession{}
+	err := um.DB.QueryRowx(q, id, auth).StructScan(r)
+	if err == sql.ErrNoRows {
+		return nil, ErrNoRecord
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if time.Since(*r.Originated) > time.Hour*(24*30) || time.Since(*r.LastSeen) > time.Hour*(24*7) {
+		return nil, ErrSessionExpired
+	}
+
+	u, err := um.Get(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
 
 }
 
-//CheckPassword returns true only if the password matches the stored password for the user
-func (um *UserModel) checkPassword(username, password string) (int, error) {
-	return 1, nil
+// SessionDelete removes a specific session from the sessions database given an auth key and user ID.
+func (um *UserModel) SessionDelete(id int, auth string) error {
+	q := um.DB.Rebind("DELETE FROM session WHERE userid = ? AND authtoken = ?")
+	_, err := um.DB.Exec(q, id, auth)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//SessionUpdate sets the user session's last seen time to now
+func (um *UserModel) SessionUpdate(id int, auth string) error {
+	q := um.DB.Rebind("UPDATE session SET last_seen = CURRENT_TIMESTAMP(0) WHERE member_id = ? AND authtoken = ?")
+	_, err := um.DB.Exec(q, id, auth)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (um *UserModel) logAttempt(username, status string) error {
+	queryBadUsername := "INSERT INTO login_log (username, login_status_id, created_at) VALUES (?, (SELECT id FROM login_status WHERE name LIKE '%Username'), CURRENT_TIMESTAMP(0))"
+	queryBadPassword := "INSERT INTO login_log (username, login_status_id, created_at) VALUES (?, (SELECT id FROM login_status WHERE name LIKE '%Password'), CURRENT_TIMESTAMP(0))"
+	querySuccess := "INSERT INTO login_log (username, login_status_id, created_at) VALUES (?, (SELECT id FROM login_status WHERE name LIKE '%Password'), CURRENT_TIMESTAMP(0))"
+	q := ""
+	switch status {
+	case "badpassword":
+		q = um.DB.Rebind(queryBadPassword)
+	case "badusername":
+		q = um.DB.Rebind(queryBadUsername)
+	case "success":
+		q = um.DB.Rebind(querySuccess)
+	default:
+		return fmt.Errorf("not a valid login attempt status")
+	}
+	_, err := um.DB.Exec(q, username)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 //define database helper functions here
@@ -244,8 +351,6 @@ func generateKey(n int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	// TODO add some error checking to ensure that the OS CSPRNG has not failed in any way
 
 	return base64.URLEncoding.EncodeToString(b), err
 }

@@ -1,7 +1,7 @@
 {{template "site_default" . }}
 
 {{define "page_content"}}
-	{{template "signup_form" .}}
+	{{.Data.Error}}
 {{end}}
 
 {{define "page_header"}}

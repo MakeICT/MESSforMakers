@@ -47,18 +47,28 @@ func (uc *UserController) List() func(http.ResponseWriter, *http.Request) {
 			if err == nil && n != 0 {
 				page = int(n)
 			}
+			form.Errors = nil //Once this field of the url params has been checked, don't want to contminate the rest.
 		}
 
 		sort := form.Get("sort")
 		if sort != "" {
-			form.PermittedValues(sort, "name", "dob")
+			form.PermittedValues(sort, "fname", "lname", "dob")
 			if !form.Valid() {
 				sort = ""
 			}
+			form.Errors = nil //Once this field of the url params has been checked, don't want to contminate the rest.
 		}
 
-		//TODO implement sort direction
-		users, err := uc.Users.GetAll(20, page, sort, "asc")
+		dir := form.Get("dir")
+		if dir != "" {
+			form.PermittedValues(dir, "asc", "desc")
+			if !form.Valid() {
+				dir = ""
+			}
+			form.Errors = nil //Once this field of the url params has been checked, don't want to contminate the rest.
+		}
+
+		users, err := uc.Users.GetAll(20, page, sort, dir)
 		if err != nil {
 			uc.serverError(w, err)
 			return
@@ -86,7 +96,7 @@ func (uc *UserController) Show() func(http.ResponseWriter, *http.Request) {
 			uc.clientError(w, http.StatusBadRequest)
 			return
 		}
-		user, err := uc.Users.Get(id)
+		user, err := uc.Users.Get(int(id)) //OK to convrt back to int because explicitly required size to be between 1 and MaxInt8
 		if err != nil {
 			uc.serverError(w, err)
 			return
@@ -172,11 +182,13 @@ func (uc *UserController) Signup() func(http.ResponseWriter, *http.Request) {
 		form.MaxLength("phone", 15)
 		form.MatchPattern("email", util.EmailRegEx)
 		form.MatchPattern("phone", util.PhoneRegEx)
+		pn := form.ValidPhone("phone")
 
-		//TODO should recognize non-zero-padded months and days e.g. 6 for june
-		//would help to confirm int on all three fields, and supply reasonable ranges (1-12, 1-31, and 1900-curyear)
-		dob, err := time.Parse("01-02-2006", fmt.Sprintf("%s-%s-%s", r.FormValue("dob.mm"), r.FormValue("dob.dd"), r.FormValue("dob.yyyy")))
-		if err != nil {
+		dobM, okM := util.IntOK(r.FormValue("dob.mm"), 1, 12)                                 //month is an int between 1 and 12
+		dobD, okD := util.IntOK(r.FormValue("dob.dd"), 1, 31)                                 //day is an int between 1 and 31
+		dobY, okY := util.IntOK(r.FormValue("dob.yyyy"), 1900, int64(time.Now().Year()))      //year is an int between 1900 and the current year
+		dob, err := time.Parse("01-02-2006", fmt.Sprintf("%02d-%02d-%02d", dobM, dobD, dobY)) //normalize the date before trying to parse it
+		if err != nil || !okM || !okD || !okY {
 			form.Errors.Add("dob", "Could not recognize date")
 		}
 
@@ -201,8 +213,7 @@ func (uc *UserController) Signup() func(http.ResponseWriter, *http.Request) {
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 
-			//TODO this erases any existing flash messages. refactor to have flash be a slice of strings
-			td.Flash = "There were errors saving the form"
+			td.Flash = views.Flash{Type: views.Failure, Message: "There were errors saving the form"}
 
 			//To minimize the number of times the plaintext password is passed back and forth, remove it before responding
 			form.Set("password", "")
@@ -219,7 +230,7 @@ func (uc *UserController) Signup() func(http.ResponseWriter, *http.Request) {
 			Email:            r.FormValue("email"),
 			Password:         r.FormValue("password"),
 			DOB:              &dob,
-			Phone:            r.FormValue("phone"),
+			Phone:            pn,
 			TextOK:           r.FormValue("oktotext") == "on",
 			MembershipStatus: ms,
 			MembershipOption: mo,
@@ -237,7 +248,7 @@ func (uc *UserController) Signup() func(http.ResponseWriter, *http.Request) {
 			form.Set("password", "")
 			form.Set("password2", "")
 
-			td.Flash = fmt.Sprintf("Could not save user: %s", err.Error())
+			td.Flash = views.Flash{Type: views.Failure, Message: fmt.Sprintf("Could not save user: %s", err.Error())}
 
 			td.Add("Form", form)
 			uc.UserView.Render(w, r, "signup.gohtml", td)
@@ -296,7 +307,7 @@ func (uc *UserController) Login() func(http.ResponseWriter, *http.Request) {
 				return
 			}
 			td.Add("Form", form)
-			td.Flash = "Bad username or password"
+			td.Flash = views.Flash{Type: views.Failure, Message: "Bad username or password"}
 			if err := uc.UserView.Render(w, r, "login.gohtml", td); err != nil {
 				uc.serverError(w, err)
 				return
@@ -320,9 +331,23 @@ func (uc *UserController) Login() func(http.ResponseWriter, *http.Request) {
 //Logout logs a user out
 func (uc *UserController) Logout() func(http.ResponseWriter, *http.Request) {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//TODO unset the cookie, delete the session in the database
-		http.Error(w, "logout not implemented yet", http.StatusInternalServerError)
-		return
+		val := r.Context().Value(models.ContextkeyUser)
+		user := models.User{}
+		if val == nil { //If there no value in the context, no user is authenticated
+			return
+		}
+		user, ok := val.(models.User)
+		if !ok { //if the value in the context can't be asserted to be a user, then no user is authenticated
+			return
+		}
+		uc.Session.Remove(r, "user")
+		authKey := uc.Session.PopString(r, "authKey")
+		err := uc.Users.SessionDelete(user.ID, authKey)
+		if err != nil {
+			uc.serverError(w, err)
+			return
+		}
+		uc.Session.Put(r, "flash", "Logged out!")
 	})
 }
 

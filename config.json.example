@@ -8,10 +8,12 @@
 		"sslmode":"disable"
 	},
 	"logger_settings": {
-		"dump_request":false
+		"dump_request":false,
+		"log_file":"makeict.log"
 	},
 	"app_settings": {
 		"port":8080,
-		"host":"localhost"
+		"host":"localhost",
+		"session_key":"32byterandomstringhere"
 	}
 }

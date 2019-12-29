@@ -8,9 +8,6 @@ import (
 	"os"
 )
 
-//TODO Check out this article for ideas on improving the logger
-//https://www.ardanlabs.com/blog/2013/11/using-log-package-in-go.html
-
 //Constants for accepting parameters indicating where logged messages should be output. Currently unused.
 const (
 	FileOnly      = "fileonly"
@@ -36,8 +33,7 @@ type Logger struct {
 func NewLogger(logfile string, dr bool, level int) (*Logger, error) {
 
 	//Setup file logging
-	//TODO make the output file a parameter that can be defined in config.json
-	f, err := os.OpenFile("makeict.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile(logfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return nil, fmt.Errorf("Error opening log file: %v", err)
 	}

@@ -147,9 +147,10 @@ CREATE TABLE session (
 	, member_id INTEGER NOT NULL REFERENCES member(id) ON DELETE CASCADE
 	, authtoken VARCHAR(64) NOT NULL
 	, originated TIMESTAMP NOT NULL DEFAULT now()
-	, lastSeen TIMESTAMP NOT NULL DEFAULT now()
-	, lastIP VARCHAR(46) NOT NULL --46 characters will allow for storing ipv6 addresses or ipv4
-	, agent VARCHAR(100) NOT NULL
+	, last_seen TIMESTAMP NOT NULL DEFAULT now()
+	, last_ip VARCHAR(46) NOT NULL --46 characters will allow for storing ipv6 addresses or ipv4
+	, agent VARCHAR(100) NOT NULL --100 characters is enough to get a good idea of the user agent
+	, UNIQUE (authtoken)
 );
 COMMENT ON TABLE session IS 'Keep track of user sessions, allow them to be deleted, expired, and investigated.';
 

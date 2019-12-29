@@ -27,6 +27,20 @@
 
 	<main>
 		<div class="container">
+			{{if ne .Flash.Type 0}}
+				<div class="card">
+						<div class="card-content flash {{if eq .Flash.Type 1}}green{{else if eq .Flash.Type 2}}orange{{else if eq .Flash.Type 3}}red{{end}}">
+							<div class="row vertical-align" style="margin-bottom: 0">
+								<div class="col s8">
+									{{.Flash.Message}}
+								</div>
+								<div class="col s4 right-align">
+									<a id="flashDismiss" class="black-text"><i class="material-icons">close</i></a>
+								</div>
+							</div>
+						</div>
+					</div>
+			{{end}}
 			<div class="col s12 m2 l1">
 				{{template "page_content" .}}
 			</div>

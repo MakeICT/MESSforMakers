@@ -22,7 +22,6 @@ func main() {
 		panic(1)
 	}
 
-	//TODO newApplication should return an error if the configuration is invalid
 	app, err := newApplication(config)
 	if err != nil {
 		fmt.Printf("Could not create the application: %v", err)

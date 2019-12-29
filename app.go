@@ -22,6 +22,7 @@ type application struct {
 	Config  *util.Config
 	UserC   controllers.UserController
 	StaticC controllers.StaticController
+	ErrorC  controllers.ErrorController
 	Session *sessions.Session
 	port    int
 }
@@ -29,7 +30,7 @@ type application struct {
 func newApplication(config *util.Config) (*application, error) {
 
 	//Set up a logger middleware
-	logger, err := util.NewLogger("makeict.log", config.Logger.DumpRequest, util.DEBUG) //KNOWN BUG, first arg is ignored
+	logger, err := util.NewLogger(config.Logger.LogFile, config.Logger.DumpRequest, util.DEBUG)
 	if err != nil {
 		return nil, fmt.Errorf("Error creating logger :: %v", err)
 	}
@@ -49,19 +50,24 @@ func newApplication(config *util.Config) (*application, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error initializing database :: %v", err)
 	}
-	//TODO this secret should probably come from the config
-	session := sessions.New([]byte("H97LwY3g5X5W0AJjdw4yEIZCIasiU2FRg"))
+	session := sessions.New([]byte(config.App.SessionKey))
 	session.Lifetime = 12 * time.Hour
 	app.Session = session
 	app.DB = db
 	app.port = config.App.Port
 
-	if err := app.UserC.Initialize(app.Config, &models.UserModel{DB: app.DB}, app.Logger, app.Session); err != nil {
+	um := &models.UserModel{DB: app.DB, HashCost: 12}
+
+	if err := app.UserC.Initialize(app.Config, um, app.Logger, app.Session); err != nil {
 		app.Logger.Fatalf("Failed to initialize user controller: %v", err)
 	}
 
-	if err := app.StaticC.Initialize(app.Config, &models.UserModel{DB: app.DB}, app.Logger, app.Session); err != nil {
+	if err := app.StaticC.Initialize(app.Config, um, app.Logger, app.Session); err != nil {
 		app.Logger.Fatalf("Failed to initialize controller for static routes: %v", err)
+	}
+
+	if err := app.ErrorC.Initialize(app.Config, um, app.Logger, app.Session); err != nil {
+		app.Logger.Fatalf("Failed to initialize controller for error routes: %v", err)
 	}
 
 	//initialize all the routes

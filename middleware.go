@@ -52,10 +52,6 @@ func (a *application) securityHeaders(h http.Handler) http.Handler {
 	})
 }
 
-type contextKey int
-
-const contextkeyUser contextKey = 1
-
 func (a *application) authenticationHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -78,28 +74,32 @@ func (a *application) authenticationHandler(h http.Handler) http.Handler {
 
 				user, err := a.UserC.Users.SessionLookup(id, auth)
 
-				//if username and token are valid, store the username, and id in the context for use by later handlers
-				if err == nil {
-					user.Authorized = true
-					// context key should be a custom type and a const NOT a string
-					ctx := context.WithValue(r.Context(), contextkeyUser, user)
-
-					// TODO if the user is authenticated, the LastSeenTime of the session should be updated
-
-					h.ServeHTTP(w, r.WithContext(ctx))
-					return
-				} else if err == models.ErrNoRecord {
+				if err == models.ErrNoRecord || err == models.ErrSessionExpired {
 					// user is either not logged in, doesn't exist, or session has expired.
 					// Remove the user id from the session and proceed as if there is no user logged in.
 					a.Session.Remove(r, "user")
 					a.Session.Remove(r, "authKey")
 					h.ServeHTTP(w, r)
 					return
-				} else {
-					a.Logger.Debugf("%v", err)
+				} else if err != nil {
+					a.Logger.Debugf("failed to retrieve session: %v\n", err)
 					http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 					return
 				}
+
+				//if username and token are valid, store the username, and id in the context for use by later handlers
+				user.Authorized = true
+				// context key should be a custom type and a const NOT a string
+				ctx := context.WithValue(r.Context(), models.ContextkeyUser, user)
+
+				err = a.UserC.Users.SessionUpdate(id, auth)
+				if err != nil {
+					a.Logger.Debugf("failed to update session: %v\n", err)
+				}
+
+				h.ServeHTTP(w, r.WithContext(ctx))
+				return
+
 			}
 		}
 
@@ -110,7 +110,7 @@ func (a *application) authenticationHandler(h http.Handler) http.Handler {
 
 func (a *application) requireAuthenticatedUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, ok := r.Context().Value(contextkeyUser).(*models.User)
+		_, ok := r.Context().Value(models.ContextkeyUser).(*models.User)
 		if !ok {
 			http.Redirect(w, r, fmt.Sprintf("http://%s:%d/login", a.Config.App.Host, a.Config.App.Port), http.StatusFound)
 			return

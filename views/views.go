@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/makeict/MESSforMakers/models"
 )
@@ -19,7 +20,7 @@ type View struct {
 type TemplateData struct {
 	AuthUser  *models.User
 	CSRFToken string
-	Flash     string
+	Flash     Flash
 	Root      string
 	PageTitle string
 	Data      map[string]interface{}
@@ -30,6 +31,17 @@ func (v *View) Render(w http.ResponseWriter, r *http.Request, page string, td *T
 	t := v.TemplateCache[page]
 	return t.ExecuteTemplate(w, page, td)
 
+}
+
+func niceDate(t *time.Time) string {
+	if t == nil || t.IsZero() {
+		return ""
+	}
+	return t.In(time.Now().Location()).Format("02-Jan-06 15:04")
+}
+
+var fm = template.FuncMap{
+	"niceDate": niceDate,
 }
 
 // LoadTemplates takes a string of folders and loads the templates into the view
@@ -45,7 +57,7 @@ func (v *View) LoadTemplates(f string) error {
 	for _, p := range pages {
 		n := filepath.Base(p)
 
-		t, err := template.New(n).ParseFiles(p)
+		t, err := template.New(n).Funcs(fm).ParseFiles(p)
 		if err != nil {
 			return fmt.Errorf("could not create template from page: %v", err)
 		}
@@ -87,4 +99,17 @@ func (d *TemplateData) Add(k string, v interface{}) {
 		d.Data = make(map[string]interface{})
 	}
 	d.Data[k] = v
+}
+
+//Defines the types of flash messages for proper user styling
+const (
+	Empty = iota
+	Success
+	Warning
+	Failure
+)
+
+type Flash struct {
+	Type    int
+	Message string
 }
