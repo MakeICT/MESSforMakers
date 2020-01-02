@@ -55,7 +55,7 @@
 // }
 
 // // listen and serve the website.
-// // TODO set up a test configuration. Test databases, test ports, database users, etc.
+// //  set up a test configuration. Test databases, test ports, database users, etc.
 // func startWebsite() {
 // 	config, err := InitConfig("config.json")
 // 	if err != nil {
@@ -222,7 +222,7 @@ func TestNewApplication(t *testing.T) {
 	t.Run("bad config should panic", testNewAppFunc(cfg, true))
 
 	// check that the app initializer rerturn OK if a good config is supplied
-	// TODO: set up a testing database so that connection is possible.
+	// : set up a testing database so that connection is possible.
 	cfg = &Config{}
 	cfg.Database.Username = "postgres_test"
 	t.Run("good config should not panic", testNewAppFunc(cfg, false))
@@ -259,7 +259,7 @@ type AppTestServer struct {
 func TestRoutes(t *testing.T) {
 
 	//set up a functional configuration
-	//TODO make this a test config, not a real config.  Needs test database set up first
+	// make this a test config, not a real config.  Needs test database set up first
 	cfg, err := InitConfig("config.json")
 
 	// create a new app
