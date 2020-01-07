@@ -56,7 +56,7 @@ func (c *Controller) setup(cfg *util.Config, um Users, l *util.Logger, s *sessio
 // DefaultData ia the method to generate required default template data and return template object
 func (c *Controller) DefaultData(r *http.Request) (*views.TemplateData, error) {
 	td := &views.TemplateData{}
-	td.Root = fmt.Sprintf("http://%s:%d/", c.AppConfig.App.Host, c.AppConfig.App.Port)
+	td.Root = fmt.Sprintf("https://%s:%d/", c.AppConfig.App.Host, c.AppConfig.App.Port)
 	if f, ok := c.Session.Pop(r, "flash").(views.Flash); ok {
 		td.Flash = f
 	} else {
@@ -78,4 +78,8 @@ func (c *Controller) clientError(w http.ResponseWriter, status int) {
 
 func (c *Controller) notFound(w http.ResponseWriter) {
 	c.clientError(w, http.StatusNotFound)
+}
+
+func ping(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("OK"))
 }

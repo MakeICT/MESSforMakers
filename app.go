@@ -32,7 +32,7 @@ func newApplication(config *util.Config) (*application, error) {
 	//Set up a logger middleware
 	logger, err := util.NewLogger(config.Logger.LogFile, config.Logger.DumpRequest, util.DEBUG)
 	if err != nil {
-		return nil, fmt.Errorf("Error creating logger :: %v", err)
+		return nil, fmt.Errorf("error creating logger: %v\n", err)
 	}
 
 	app := application{Logger: logger, Config: config}
@@ -48,7 +48,7 @@ func newApplication(config *util.Config) (*application, error) {
 		config.Database.Database,
 	))
 	if err != nil {
-		return nil, fmt.Errorf("Error initializing database :: %v", err)
+		return nil, fmt.Errorf("error initializing database: %v\n", err)
 	}
 	session := sessions.New([]byte(config.App.SessionKey))
 	session.Lifetime = 12 * time.Hour
@@ -59,15 +59,15 @@ func newApplication(config *util.Config) (*application, error) {
 	um := &models.UserModel{DB: app.DB, HashCost: 12}
 
 	if err := app.UserC.Initialize(app.Config, um, app.Logger, app.Session); err != nil {
-		app.Logger.Fatalf("Failed to initialize user controller: %v", err)
+		app.Logger.Fatalf("failed to initialize user controller: %v\n", err)
 	}
 
 	if err := app.StaticC.Initialize(app.Config, um, app.Logger, app.Session); err != nil {
-		app.Logger.Fatalf("Failed to initialize controller for static routes: %v", err)
+		app.Logger.Fatalf("failed to initialize controller for static routes: %v\n", err)
 	}
 
 	if err := app.ErrorC.Initialize(app.Config, um, app.Logger, app.Session); err != nil {
-		app.Logger.Fatalf("Failed to initialize controller for error routes: %v", err)
+		app.Logger.Fatalf("failed to initialize controller for error routes: %v\n", err)
 	}
 
 	//initialize all the routes

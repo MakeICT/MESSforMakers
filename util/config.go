@@ -33,6 +33,8 @@ func InitConfig(filePath string) (*Config, error) {
 	if err != nil {
 		return &config, err
 	}
-	json.Unmarshal(file, &config)
+	if err := json.Unmarshal(file, &config); err != nil {
+		return nil, err
+	}
 	return &config, nil
 }

@@ -35,7 +35,7 @@ func NewLogger(logfile string, dr bool, level int) (*Logger, error) {
 	//Setup file logging
 	f, err := os.OpenFile(logfile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		return nil, fmt.Errorf("Error opening log file: %v", err)
+		return nil, fmt.Errorf("error opening log file: %v\n", err)
 	}
 	multiWritter := io.MultiWriter(f, os.Stdout)
 
@@ -62,7 +62,7 @@ func (l *Logger) SetLevel(lev int) error {
 		l.level = lev
 		return nil
 	}
-	return errors.New("Level not recognized")
+	return errors.New("level not recognized")
 }
 
 //Debug extends fmt.Print to only log messages if the log level is set to DEBUG

@@ -3,3 +3,4 @@ makeict.log
 config.json
 *.exe
 .vscode
+*.out

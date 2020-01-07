@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -18,15 +19,20 @@ func main() {
 	config, err := util.InitConfig("config.json")
 	if err != nil {
 		//No log files have been set up yet, so just dump the error to stdout
-		fmt.Print("Cannot parse the configuration file")
+		fmt.Printf("cannot parse the configuration file: %v\n", err)
 		panic(1)
 	}
 
 	app, err := newApplication(config)
 	if err != nil {
-		fmt.Printf("Could not create the application: %v", err)
+		fmt.Printf("Could not create the application: %v\n", err)
 	}
 	defer app.Logger.Close()
+
+	tlsConfig := &tls.Config{
+		PreferServerCipherSuites: true,
+		CurvePreferences:         []tls.CurveID{tls.X25519, tls.CurveP256},
+	}
 
 	srv := &http.Server{
 		ReadTimeout:  5 * time.Second,
@@ -35,9 +41,14 @@ func main() {
 		Addr:         fmt.Sprintf("%s:%d", config.App.Host, config.App.Port),
 		ErrorLog:     app.Logger.Logger,
 		Handler:      app.Router,
+		TLSConfig:    tlsConfig,
 	}
 
+	go http.ListenAndServe(":80", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "https://"+r.Host+r.URL.String(), http.StatusMovedPermanently)
+	}))
+
 	app.Logger.Println("Starting Application on :" + strconv.Itoa(app.port))
-	app.Logger.Fatal(srv.ListenAndServe())
+	app.Logger.Fatal(srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem"))
 
 }
